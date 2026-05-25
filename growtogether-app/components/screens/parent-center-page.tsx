@@ -5,9 +5,12 @@ import { useRouter } from "next/navigation";
 import { EmptyState } from "@/components/empty-state";
 import { useAppState } from "@/components/providers/app-state-provider";
 import { Panel } from "@/components/ui/panel";
+import { EmotionDetectionCard } from "@/components/ui/emotion-detection-card";
+import { SafetyCheckCard } from "@/components/ui/safety-check-card";
 import {
   ParentSummaryResponse,
   ParentSupportResponse,
+  MessageSafetyCheck,
 } from "@/lib/types";
 
 export function ParentCenterPage() {
@@ -22,6 +25,11 @@ export function ParentCenterPage() {
     useState<ParentSupportResponse["source"]>("fallback");
   const [loadingSummary, setLoadingSummary] = useState(false);
   const [loadingSupport, setLoadingSupport] = useState(false);
+  const [emotionLoading, setEmotionLoading] = useState(false);
+  const [emotionData, setEmotionData] = useState<any>(null);
+  const [safetyLoading, setSafetyLoading] = useState(false);
+  const [safetyCheck, setSafetyCheck] = useState<MessageSafetyCheck | null>(null);
+  const [suggestedRewrite, setSuggestedRewrite] = useState("");
 
   if (!activeJourney) {
     return (
@@ -67,6 +75,53 @@ export function ParentCenterPage() {
       setSupportSource(data.source);
     } finally {
       setLoadingSupport(false);
+    }
+  }
+
+  async function handleCheckEmotion() {
+    if (!encouragement.trim()) return;
+    
+    setEmotionLoading(true);
+
+    try {
+      const response = await fetch("/api/ai/emotion-detection", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ childReflection: encouragement }),
+      });
+      const data = await response.json();
+      setEmotionData(data.detection);
+    } finally {
+      setEmotionLoading(false);
+    }
+  }
+
+  async function handleCheckSafety() {
+    if (!encouragement.trim()) return;
+    
+    setSafetyLoading(true);
+
+    try {
+      const response = await fetch("/api/ai/safety-filter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: encouragement }),
+      });
+      const data = await response.json();
+      setSafetyCheck(data.check);
+      if (!data.check.isSafe && data.check.suggestion) {
+        setSuggestedRewrite(data.check.suggestion);
+      }
+    } finally {
+      setSafetyLoading(false);
+    }
+  }
+
+  function handleAcceptSuggestion() {
+    if (suggestedRewrite) {
+      setEncouragement(suggestedRewrite);
+      setSafetyCheck(null);
+      setSuggestedRewrite("");
     }
   }
 
@@ -154,10 +209,51 @@ export function ParentCenterPage() {
           <textarea
             className="mt-2 min-h-32 w-full rounded-2xl border border-border bg-white px-4 py-3"
             value={encouragement}
-            onChange={(event) => setEncouragement(event.target.value)}
+            onChange={(event) => {
+              setEncouragement(event.target.value);
+              setSafetyCheck(null);
+              setSuggestedRewrite("");
+              setEmotionData(null);
+            }}
             placeholder="I noticed how steady you stayed today..."
           />
         </label>
+
+        <div className="mt-4 flex gap-2">
+          <button
+            type="button"
+            onClick={handleCheckEmotion}
+            className="flex-1 rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground transition hover:border-accent hover:text-accent"
+          >
+            {emotionLoading ? "Analyzing..." : "Check emotion tone"}
+          </button>
+          <button
+            type="button"
+            onClick={handleCheckSafety}
+            className="flex-1 rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground transition hover:border-accent hover:text-accent"
+          >
+            {safetyLoading ? "Checking..." : "Safety filter"}
+          </button>
+        </div>
+
+        {emotionData && (
+          <div className="mt-4">
+            <EmotionDetectionCard
+              emotion={emotionData.emotion}
+              suggestion={emotionData.suggestion}
+            />
+          </div>
+        )}
+
+        {safetyCheck && (
+          <div className="mt-4">
+            <SafetyCheckCard
+              isSafe={safetyCheck.isSafe}
+              suggestion={safetyCheck.suggestion}
+              onAcceptSuggestion={handleAcceptSuggestion}
+            />
+          </div>
+        )}
 
         <label className="mt-5 block">
           <span className="text-sm font-medium text-foreground">

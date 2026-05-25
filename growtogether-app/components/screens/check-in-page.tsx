@@ -6,23 +6,29 @@ import { EmptyState } from "@/components/empty-state";
 import { useAppState } from "@/components/providers/app-state-provider";
 import { Panel } from "@/components/ui/panel";
 import { ProgressBar } from "@/components/ui/progress-bar";
-import { ReflectionResponse } from "@/lib/types";
+import { StyleSelector } from "@/components/ui/style-selector";
+import { CheckInResults } from "@/components/ui/check-in-results";
+import { CoachScore, ReflectionStyle, ReflectionResponse } from "@/lib/types";
 import { formatRelativeProgress, getProgressPercentage } from "@/lib/utils";
 
 export function CheckInPage() {
   const router = useRouter();
-  const { activeJourney, saveCheckIn } = useAppState();
+  const { activeJourney, saveCheckIn, state } = useAppState();
   const [progressAdded, setProgressAdded] = useState(1);
+  const [reflectionStyle, setReflectionStyle] = useState<ReflectionStyle>("fun");
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
   const [source, setSource] = useState<ReflectionResponse["source"]>("fallback");
   const [loadingQuestion, setLoadingQuestion] = useState(false);
+  const [coachScore, setCoachScore] = useState<CoachScore | null>(null);
+  const [loadingScore, setLoadingScore] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   if (!activeJourney) {
     return (
       <EmptyState
         title="A journey comes first"
-        description="Create a goal from the child’s interests first, then come back here for daily progress and reflection."
+        description="Create a goal from the child's interests first, then come back here for daily progress and reflection."
         ctaHref="/discover"
         ctaLabel="Create a journey"
       />
@@ -32,12 +38,14 @@ export function CheckInPage() {
   async function handleGenerateQuestion(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setLoadingQuestion(true);
+    setCoachScore(null);
+    setSaved(false);
 
     try {
-      const response = await fetch("/api/ai/reflection", {
+      const response = await fetch("/api/ai/styled-reflection", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ journey: activeJourney, progressAdded }),
+        body: JSON.stringify({ journey: activeJourney, progressAdded, style: reflectionStyle }),
       });
       const data = (await response.json()) as ReflectionResponse;
       setQuestion(data.question);
@@ -47,16 +55,40 @@ export function CheckInPage() {
     }
   }
 
-  function handleSaveCheckIn() {
-    if (!question.trim() || !answer.trim()) {
-      return;
-    }
+  async function handleSaveCheckIn() {
+    if (!question.trim() || !answer.trim()) return;
 
+    // Save the check-in first
     saveCheckIn({
       progressAdded,
       reflectionQuestion: question,
       childAnswer: answer,
     });
+    setSaved(true);
+
+    // Then generate the AI coach score
+    setLoadingScore(true);
+    try {
+      const journeyCheckIns = state.checkIns.filter(
+        (c) => c.journeyId === activeJourney.id
+      );
+      const response = await fetch("/api/ai/coach-score", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          journey: activeJourney,
+          checkIns: journeyCheckIns,
+          currentCheckInAnswer: answer,
+        }),
+      });
+      const data = await response.json();
+      setCoachScore(data.score);
+    } finally {
+      setLoadingScore(false);
+    }
+  }
+
+  function handleGoHome() {
     router.push("/");
   }
 
@@ -96,6 +128,12 @@ export function CheckInPage() {
               onChange={(event) => setProgressAdded(Number(event.target.value))}
             />
           </label>
+
+          {/* Feature 6: Reflection Style Selector */}
+          <StyleSelector
+            selectedStyle={reflectionStyle}
+            onStyleSelect={setReflectionStyle}
+          />
 
           <button
             type="submit"
@@ -139,13 +177,36 @@ export function CheckInPage() {
           />
         </label>
 
-        <button
-          type="button"
-          onClick={handleSaveCheckIn}
-          className="mt-6 rounded-full bg-secondary px-5 py-3 text-sm font-semibold text-white transition hover:bg-secondary/90"
-        >
-          Save check-in
-        </button>
+        {!saved ? (
+          <button
+            type="button"
+            onClick={handleSaveCheckIn}
+            className="mt-6 rounded-full bg-secondary px-5 py-3 text-sm font-semibold text-white transition hover:bg-secondary/90"
+          >
+            Save check-in
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={handleGoHome}
+            className="mt-6 rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:bg-accent-strong"
+          >
+            Back to dashboard
+          </button>
+        )}
+
+        {/* Feature 1: AI Growth Coach Score */}
+        {loadingScore && (
+          <div className="mt-6 rounded-[1.5rem] bg-white/75 p-5 shadow-sm">
+            <p className="text-sm text-muted animate-pulse">Generating your growth coach score...</p>
+          </div>
+        )}
+
+        {coachScore && !loadingScore && (
+          <div className="mt-6">
+            <CheckInResults score={coachScore} />
+          </div>
+        )}
       </Panel>
     </div>
   );

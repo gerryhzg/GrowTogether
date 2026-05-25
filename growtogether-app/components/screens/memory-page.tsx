@@ -1,16 +1,45 @@
 "use client";
 
+import { useState } from "react";
 import { EmptyState } from "@/components/empty-state";
 import { HistoryChart } from "@/components/history-chart";
+import { WeeklyHighlightCard } from "@/components/ui/weekly-highlight-card";
 import { useAppState } from "@/components/providers/app-state-provider";
 import { Panel } from "@/components/ui/panel";
 import { formatDate } from "@/lib/utils";
 
 export function MemoryPage() {
   const { state } = useAppState();
+  const [weeklyHighlight, setWeeklyHighlight] = useState<string | null>(null);
+  const [highlightLoading, setHighlightLoading] = useState(false);
+
   const historyEntries = [...state.historyEntries].sort((left, right) =>
     right.date.localeCompare(left.date),
   );
+
+  async function loadWeeklyHighlight() {
+    if (weeklyHighlight || highlightLoading) return;
+    
+    setHighlightLoading(true);
+
+    try {
+      const response = await fetch("/api/ai/weekly-highlight", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          journeyId: state.activeJourneyId,
+          historyEntries,
+          checkIns: state.checkIns,
+        }),
+      });
+      const data = await response.json();
+      if (data.highlights && data.highlights.length > 0) {
+        setWeeklyHighlight(data.highlights[0].highlight);
+      }
+    } finally {
+      setHighlightLoading(false);
+    }
+  }
 
   if (historyEntries.length === 0) {
     return (
@@ -34,6 +63,12 @@ export function MemoryPage() {
           Each saved moment becomes part of the family story: the goal, the effort, the reflection, and the encouragement that came after it.
         </p>
       </Panel>
+
+      <WeeklyHighlightCard
+        highlight={weeklyHighlight}
+        loading={highlightLoading}
+        onLoadHighlight={loadWeeklyHighlight}
+      />
 
       <Panel>
         <p className="text-sm uppercase tracking-[0.25em] text-secondary">Progress graph</p>

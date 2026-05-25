@@ -4,6 +4,7 @@ import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAppState } from "@/components/providers/app-state-provider";
 import { Panel } from "@/components/ui/panel";
+import { GoalExplanationCard } from "@/components/ui/goal-explanation-card";
 import { INTEREST_OPTIONS } from "@/lib/constants";
 import {
   GoalSuggestion,
@@ -41,6 +42,8 @@ export function DiscoverPage() {
   const [customUnit, setCustomUnit] = useState("sessions");
   const [source, setSource] = useState<GoalSuggestionResponse["source"]>("fallback");
   const [loading, setLoading] = useState(false);
+  const [explanations, setExplanations] = useState<Record<number, string>>({});
+  const [loadingExplanations, setLoadingExplanations] = useState<Record<number, boolean>>({});
 
   const interestPayload: InterestRating[] = INTEREST_OPTIONS.map((interest) => ({
     interest,
@@ -86,6 +89,30 @@ export function DiscoverPage() {
     });
 
     router.push("/");
+  }
+
+  async function loadExplanation(index: number) {
+    if (explanations[index] || loadingExplanations[index]) return;
+    
+    const goal = goalSuggestions[index];
+    if (!goal) return;
+
+    setLoadingExplanations((current) => ({ ...current, [index]: true }));
+
+    try {
+      const response = await fetch("/api/ai/goal-explanation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          goal,
+          interests: state.interestRatings,
+        }),
+      });
+      const data = await response.json();
+      setExplanations((current) => ({ ...current, [index]: data.explanation }));
+    } finally {
+      setLoadingExplanations((current) => ({ ...current, [index]: false }));
+    }
   }
 
   return (
@@ -159,31 +186,41 @@ export function DiscoverPage() {
             goalSuggestions.map((goal, index) => {
               const active = selectedGoalIndex === index;
               return (
-                <button
-                  key={`${goal.title}-${index}`}
-                  type="button"
-                  onClick={() => {
-                    setSelectedGoalIndex(index);
-                    setCustomTitle(goal.title);
-                    setCustomDescription(goal.description);
-                    setCustomTargetCount(goal.targetCount);
-                    setCustomUnit(goal.unit);
-                  }}
-                  className={`block w-full rounded-[1.5rem] border p-4 text-left transition ${
-                    active
-                      ? "border-accent bg-accent-soft/55"
-                      : "border-border bg-white/70 hover:border-accent/40"
-                  }`}
-                >
-                  <p className="text-xs uppercase tracking-[0.25em] text-secondary">
-                    {goal.linkedInterest}
-                  </p>
-                  <p className="mt-2 text-lg font-semibold text-foreground">{goal.title}</p>
-                  <p className="mt-2 text-sm text-muted">{goal.description}</p>
-                  <p className="mt-3 text-sm font-medium text-foreground">
-                    Goal size: {goal.targetCount} {goal.unit}
-                  </p>
-                </button>
+                <div key={`${goal.title}-${index}`}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedGoalIndex(index);
+                      setCustomTitle(goal.title);
+                      setCustomDescription(goal.description);
+                      setCustomTargetCount(goal.targetCount);
+                      setCustomUnit(goal.unit);
+                      loadExplanation(index);
+                    }}
+                    className={`block w-full rounded-[1.5rem] border p-4 text-left transition ${
+                      active
+                        ? "border-accent bg-accent-soft/55"
+                        : "border-border bg-white/70 hover:border-accent/40"
+                    }`}
+                  >
+                    <p className="text-xs uppercase tracking-[0.25em] text-secondary">
+                      {goal.linkedInterest}
+                    </p>
+                    <p className="mt-2 text-lg font-semibold text-foreground">{goal.title}</p>
+                    <p className="mt-2 text-sm text-muted">{goal.description}</p>
+                    <p className="mt-3 text-sm font-medium text-foreground">
+                      Goal size: {goal.targetCount} {goal.unit}
+                    </p>
+                  </button>
+                  {active && (
+                    <div className="mt-3">
+                      <GoalExplanationCard
+                        explanation={explanations[index] ?? null}
+                        loading={loadingExplanations[index] ?? false}
+                      />
+                    </div>
+                  )}
+                </div>
               );
             })
           ) : (
