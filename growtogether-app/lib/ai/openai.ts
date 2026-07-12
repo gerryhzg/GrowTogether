@@ -6,7 +6,9 @@ import {
   ReflectionRequest,
   CoachScoreRequest,
   DifficultyRequest,
+  EmotionDetection,
   EmotionRequest,
+  EmotionType,
   NextStepRequest,
   HighlightRequest,
   StyledReflectionRequest,
@@ -144,6 +146,17 @@ function isGoalSuggestion(value: unknown): value is GoalSuggestion {
   );
 }
 
+function isEmotionType(value: unknown): value is EmotionType {
+  return (
+    value === "excited" ||
+    value === "frustrated" ||
+    value === "proud" ||
+    value === "unsure" ||
+    value === "tired" ||
+    value === "curious"
+  );
+}
+
 function safeJsonParse(text: string | null) {
   if (!text) {
     return null;
@@ -194,13 +207,19 @@ Suggest if the goal is too easy, too hard, or just right with specific adjustmen
 }
 
 // Feature 3: Emotion-Aware Parent Suggestions
-export async function generateEmotionDetectionWithAI(payload: EmotionRequest) {
+export async function generateEmotionDetectionWithAI(
+  payload: EmotionRequest,
+): Promise<EmotionDetection | null> {
   const text = await createStructuredJson(`Return JSON with shape {"emotion":"","suggestion":""}. Analyze child reflection:
 "${payload.childReflection}"
 Detect emotion (excited, frustrated, proud, unsure, tired, or curious). Then suggest one parent response tailored to this emotion.`);
   
   const parsed = safeJsonParse(text);
-  if (!parsed || typeof parsed.emotion !== "string" || typeof parsed.suggestion !== "string") {
+  if (
+    !parsed ||
+    !isEmotionType(parsed.emotion) ||
+    typeof parsed.suggestion !== "string"
+  ) {
     return null;
   }
   
