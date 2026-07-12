@@ -1,11 +1,21 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { EmptyState } from "@/components/empty-state";
 import { Panel } from "@/components/ui/panel";
 import { ProgressBar } from "@/components/ui/progress-bar";
+import { NextStepCard } from "@/components/ui/next-step-card";
+import { StreakCard } from "@/components/ui/streak-card";
+import { BadgesSection } from "@/components/ui/badges-section";
 import { useAppState } from "@/components/providers/app-state-provider";
-import { formatDate, formatRelativeProgress, getProgressPercentage } from "@/lib/utils";
+import {
+  formatDate,
+  formatRelativeProgress,
+  getProgressPercentage,
+  getAllBadges,
+  calculateStreakInfo,
+} from "@/lib/utils";
 
 export function DashboardPage() {
   const {
@@ -14,7 +24,10 @@ export function DashboardPage() {
     latestCheckIn,
     latestParentSupport,
     topInterests,
+    state,
   } = useAppState();
+  const [nextStepLoading, setNextStepLoading] = useState(false);
+  const [nextStep, setNextStep] = useState<string | null>(null);
 
   if (!hydrated) {
     return <Panel>Loading your growth journey...</Panel>;
@@ -31,6 +44,26 @@ export function DashboardPage() {
     );
   }
 
+  async function loadNextStep() {
+    if (nextStep || nextStepLoading) return;
+    setNextStepLoading(true);
+
+    try {
+      const response = await fetch("/api/ai/next-step", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ journey: activeJourney, latestCheckIn }),
+      });
+      const data = await response.json();
+      setNextStep(data.step);
+    } finally {
+      setNextStepLoading(false);
+    }
+  }
+
+  const badges = getAllBadges(state, activeJourney);
+  const streakInfo = calculateStreakInfo(activeJourney, state.checkIns);
+
   return (
     <div className="grid gap-5 lg:grid-cols-[1.55fr_1fr]">
       <Panel className="relative overflow-hidden">
@@ -44,14 +77,8 @@ export function DashboardPage() {
 
           <div className="mt-6 grid gap-4 sm:grid-cols-3">
             <InfoCard label="Top interest" value={activeJourney.linkedInterest} />
-            <InfoCard
-              label="Progress"
-              value={formatRelativeProgress(activeJourney)}
-            />
-            <InfoCard
-              label="Last update"
-              value={formatDate(activeJourney.updatedAt)}
-            />
+            <InfoCard label="Progress" value={formatRelativeProgress(activeJourney)} />
+            <InfoCard label="Last update" value={formatDate(activeJourney.updatedAt)} />
           </div>
 
           <div className="mt-6">
@@ -63,15 +90,15 @@ export function DashboardPage() {
         </div>
       </Panel>
 
-      <Panel className="bg-secondary text-white">
-        <p className="text-sm uppercase tracking-[0.25em] text-white/70">Family snapshot</p>
-        <h3 className="mt-3 font-display text-3xl">Today feels connected.</h3>
-        <p className="mt-3 text-sm leading-7 text-white/80">
+      <Panel>
+        <p className="text-sm uppercase tracking-[0.25em] text-secondary">Family snapshot</p>
+        <h3 className="mt-3 font-display text-3xl text-foreground">Today feels connected.</h3>
+        <p className="mt-3 text-sm leading-7 text-muted">
           {topInterests.length > 0
             ? `The strongest interests right now are ${topInterests.join(", ")}.`
             : "Interest discovery will fill this space once the child rates what they love."}
         </p>
-        <div className="mt-6 space-y-3 text-sm text-white/85">
+        <div className="mt-6 space-y-3 text-sm text-muted">
           <p>Daily check-in and parent encouragement are designed to stay tied to the same goal.</p>
           <p>When this journey is complete, it moves into Growth Memory automatically.</p>
         </div>
@@ -110,6 +137,16 @@ export function DashboardPage() {
           Visit Parent Center
         </Link>
       </Panel>
+
+      <NextStepCard
+        step={nextStep}
+        loading={nextStepLoading}
+        onLoadStep={loadNextStep}
+      />
+
+      <StreakCard streakInfo={streakInfo} />
+
+      <BadgesSection badges={badges} />
     </div>
   );
 }
