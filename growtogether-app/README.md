@@ -94,15 +94,20 @@ This creates a `node_modules` folder. That folder is not pushed to GitHub.
 
 Create a file named `.env.local` in the `growtogether-app` folder.
 
-Add this line:
+You can copy `.env.example` as a starting point. Add these lines:
 
 ```env
 OPENAI_API_KEY=your_key_here
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
 Replace `your_key_here` with your real OpenAI API key.
+Replace the Supabase values with your project URL and anon key from Supabase `Project Settings > API`.
 
 If you do not have an API key yet, the app can still run. Some AI features will use built-in fallback suggestions.
+
+To create families and save parent/child profiles, the Supabase database also needs the app tables and policies. In Supabase, open `SQL Editor`, paste the contents of `supabase-setup.sql`, and run it once for your project.
 
 Important: do not commit `.env.local`. It contains private information and is already ignored by Git.
 
