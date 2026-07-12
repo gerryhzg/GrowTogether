@@ -8,32 +8,32 @@ import { ProgressBar } from "@/components/ui/progress-bar";
 import { NextStepCard } from "@/components/ui/next-step-card";
 import { StreakCard } from "@/components/ui/streak-card";
 import { BadgesSection } from "@/components/ui/badges-section";
-import { useAppState } from "@/components/providers/app-state-provider";
+import { useAuth } from "@/components/providers/auth-context";
+import { useCheckIns, useInterests, useJourney, useParentSupport } from "@/lib/supabase-hooks";
 import {
+  calculateStreakInfo,
   formatDate,
   formatRelativeProgress,
-  getProgressPercentage,
   getAllBadges,
-  calculateStreakInfo,
+  getProgressPercentage,
 } from "@/lib/utils";
+import { AppState, DailyCheckIn, GrowthJourney, InterestName, ParentSupportEntry } from "@/lib/types";
+
+function toInterestName(value: string): InterestName {
+  const allowed: InterestName[] = ["Music", "Sports", "Science", "Coding", "Art", "Animals"];
+  return allowed.includes(value as InterestName) ? value as InterestName : "Music";
+}
 
 export function DashboardPage() {
-  const {
-    activeJourney,
-    hydrated,
-    latestCheckIn,
-    latestParentSupport,
-    topInterests,
-    state,
-  } = useAppState();
+  const { user } = useAuth();
+  const { interests } = useInterests(user?.familyId);
+  const { journey } = useJourney(user?.familyId);
+  const { checkIns } = useCheckIns(user?.familyId, journey?.id);
+  const { parentSupport } = useParentSupport(user?.familyId, journey?.id);
   const [nextStepLoading, setNextStepLoading] = useState(false);
   const [nextStep, setNextStep] = useState<string | null>(null);
 
-  if (!hydrated) {
-    return <Panel>Loading your growth journey...</Panel>;
-  }
-
-  if (!activeJourney) {
+  if (!journey) {
     return (
       <EmptyState
         title="Create your first growth journey"
@@ -43,6 +43,73 @@ export function DashboardPage() {
       />
     );
   }
+
+  const activeJourney: GrowthJourney = {
+    id: journey.id,
+    linkedInterest: toInterestName(journey.linked_interest),
+    topInterests: [toInterestName(journey.linked_interest)],
+    goalTitle: journey.goal_title,
+    goalDescription: journey.goal_description,
+    targetCount: journey.target_count,
+    currentCount: journey.current_count,
+    unit: journey.unit,
+    status: journey.status as GrowthJourney["status"],
+    createdAt: journey.created_at ?? "",
+    updatedAt: journey.created_at ?? "",
+  };
+
+  const latestCheckInRow = checkIns[0];
+  const latestCheckIn: DailyCheckIn | null = latestCheckInRow
+    ? {
+        id: latestCheckInRow.id,
+        journeyId: latestCheckInRow.journey_id,
+        date: latestCheckInRow.created_at ?? "",
+        progressAdded: latestCheckInRow.progress_added,
+        reflectionQuestion: latestCheckInRow.reflection_question,
+        childAnswer: latestCheckInRow.child_answer,
+      }
+    : null;
+
+  const latestParentSupportRow = parentSupport[0];
+  const latestParentSupport: ParentSupportEntry | null = latestParentSupportRow
+    ? {
+        id: latestParentSupportRow.id,
+        journeyId: latestParentSupportRow.journey_id,
+        date: latestParentSupportRow.created_at ?? "",
+        summary: latestParentSupportRow.summary,
+        encouragementText: latestParentSupportRow.encouragement_text,
+        activitySuggestion: latestParentSupportRow.activity_suggestion,
+      }
+    : null;
+
+  const topInterests = [...interests]
+    .sort((left, right) => right.rating - left.rating)
+    .slice(0, 3)
+    .map((entry) => entry.interest);
+  const mappedCheckIns = checkIns.map((entry): DailyCheckIn => ({
+    id: entry.id,
+    journeyId: entry.journey_id,
+    date: entry.created_at ?? "",
+    progressAdded: entry.progress_added,
+    reflectionQuestion: entry.reflection_question,
+    childAnswer: entry.child_answer,
+  }));
+  const mappedParentSupport = parentSupport.map((entry): ParentSupportEntry => ({
+    id: entry.id,
+    journeyId: entry.journey_id,
+    date: entry.created_at ?? "",
+    summary: entry.summary,
+    encouragementText: entry.encouragement_text,
+    activitySuggestion: entry.activity_suggestion,
+  }));
+  const dashboardState: AppState = {
+    activeJourneyId: activeJourney.id,
+    interestRatings: interests.map((entry) => ({ interest: toInterestName(entry.interest), rating: entry.rating })),
+    journeys: [activeJourney],
+    checkIns: mappedCheckIns,
+    parentSupportEntries: mappedParentSupport,
+    historyEntries: [],
+  };
 
   async function loadNextStep() {
     if (nextStep || nextStepLoading) return;
@@ -61,8 +128,9 @@ export function DashboardPage() {
     }
   }
 
-  const badges = getAllBadges(state, activeJourney);
-  const streakInfo = calculateStreakInfo(activeJourney, state.checkIns);
+  const badges = getAllBadges(dashboardState, activeJourney);
+  const streakInfo = calculateStreakInfo(activeJourney, mappedCheckIns);
+  const isParent = user?.role === "parent";
 
   return (
     <div className="grid gap-5 lg:grid-cols-[1.55fr_1fr]">
@@ -128,14 +196,18 @@ export function DashboardPage() {
         </h3>
         <p className="mt-4 text-muted">
           {latestParentSupport?.activitySuggestion ??
-            "Parent Support Center can suggest a warm message and a shared activity next."}
+            (isParent
+              ? "Parent Support Center can suggest a warm message and a shared activity next."
+              : "Your parent can send a warm message from Parent Center.")}
         </p>
-        <Link
-          href="/parent"
-          className="mt-5 inline-flex rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground transition hover:border-accent hover:text-accent"
-        >
-          Visit Parent Center
-        </Link>
+        {isParent && (
+          <Link
+            href="/parent"
+            className="mt-5 inline-flex rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground transition hover:border-accent hover:text-accent"
+          >
+            Visit Parent Center
+          </Link>
+        )}
       </Panel>
 
       <NextStepCard

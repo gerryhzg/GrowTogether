@@ -5,7 +5,28 @@ import { useAuth } from "@/components/providers/auth-context";
 import { useJourney, useCheckIns, useParentSupport } from "@/lib/supabase-hooks";
 import { Panel } from "@/components/ui/panel";
 import { EmptyState } from "@/components/empty-state";
-import { MessageSafetyCheck } from "@/lib/types";
+import {
+  DailyCheckIn,
+  GrowthJourney,
+  MessageSafetyCheck,
+  ParentSummaryResponse,
+  ParentSupportResponse,
+  SafetyCheckResponse,
+} from "@/lib/types";
+
+type JsonResult<T> = { data: T | null; error: string | null };
+
+async function readJsonResponse<T>(response: Response): Promise<JsonResult<T>> {
+  if (!response.ok) {
+    return { data: null, error: `Request failed with status ${response.status}.` };
+  }
+
+  try {
+    return { data: (await response.json()) as T, error: null };
+  } catch {
+    return { data: null, error: "The server returned an empty response. Please try again." };
+  }
+}
 
 export function ParentCenterPage() {
   const { user } = useAuth();
@@ -21,6 +42,7 @@ export function ParentCenterPage() {
   const [safetyCheck, setSafetyCheck] = useState<MessageSafetyCheck | null>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [actionError, setActionError] = useState("");
 
   const latestCheckIn = checkIns[0];
   const latestSupport = parentSupport[0];
@@ -29,23 +51,57 @@ export function ParentCenterPage() {
     return <EmptyState title="Waiting for your child to start a journey" description="Once your child creates a goal and does their first check-in, this screen will help you support them." ctaHref="/discover" ctaLabel="View child's interests" />;
   }
 
-  const progress = Math.min(100, Math.round((journey.current_count / journey.target_count) * 100));
+  const activeJourney = journey;
+  const progress = Math.min(100, Math.round((activeJourney.current_count / activeJourney.target_count) * 100));
+  const journeyPayload: GrowthJourney = {
+    id: activeJourney.id,
+    linkedInterest: activeJourney.linked_interest as GrowthJourney["linkedInterest"],
+    topInterests: [activeJourney.linked_interest as GrowthJourney["linkedInterest"]],
+    goalTitle: activeJourney.goal_title,
+    goalDescription: activeJourney.goal_description,
+    targetCount: activeJourney.target_count,
+    currentCount: activeJourney.current_count,
+    unit: activeJourney.unit,
+    status: activeJourney.status as GrowthJourney["status"],
+    createdAt: activeJourney.created_at ?? "",
+    updatedAt: activeJourney.created_at ?? "",
+  };
+  const latestCheckInPayload: DailyCheckIn | null = latestCheckIn
+    ? {
+        id: latestCheckIn.id,
+        journeyId: latestCheckIn.journey_id,
+        date: latestCheckIn.created_at ?? "",
+        progressAdded: latestCheckIn.progress_added,
+        reflectionQuestion: latestCheckIn.reflection_question,
+        childAnswer: latestCheckIn.child_answer,
+      }
+    : null;
 
   async function handleGenerateSummary(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setLoadingSummary(true);
+    setActionError("");
     try {
-      const response = await fetch("/api/ai/parent-summary", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ journey: { goalTitle: journey.goal_title, goalDescription: journey.goal_description }, latestCheckIn: latestCheckIn ? { childAnswer: latestCheckIn.child_answer, reflectionQuestion: latestCheckIn.reflection_question } : null }) });
-      const data = await response.json();
+      const response = await fetch("/api/ai/parent-summary", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ journey: journeyPayload, latestCheckIn: latestCheckInPayload }) });
+      const { data, error } = await readJsonResponse<ParentSummaryResponse>(response);
+      if (error || !data) {
+        setActionError(error ?? "Could not generate a parent summary.");
+        return;
+      }
       setSummary(data.summary);
     } finally { setLoadingSummary(false); }
   }
 
   async function handleGenerateSupport() {
     setLoadingSupport(true);
+    setActionError("");
     try {
-      const response = await fetch("/api/ai/parent-support", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ journey: { goalTitle: journey.goal_title }, latestCheckIn: latestCheckIn ? { childAnswer: latestCheckIn.child_answer } : null, summary }) });
-      const data = await response.json();
+      const response = await fetch("/api/ai/parent-support", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ journey: journeyPayload, latestCheckIn: latestCheckInPayload, summary }) });
+      const { data, error } = await readJsonResponse<ParentSupportResponse>(response);
+      if (error || !data) {
+        setActionError(error ?? "Could not generate encouragement.");
+        return;
+      }
       setEncouragement(data.encouragement);
       setActivity(data.activity);
     } finally { setLoadingSupport(false); }
@@ -55,10 +111,15 @@ export function ParentCenterPage() {
     if (!encouragement.trim()) return;
     setSafetyLoading(true);
     setSafetyCheck(null);
+    setActionError("");
     try {
       const response = await fetch("/api/ai/safety-filter", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: encouragement }) });
-      const data = await response.json();
-      setSafetyCheck(data.safety);
+      const { data, error } = await readJsonResponse<SafetyCheckResponse>(response);
+      if (error || !data) {
+        setActionError(error ?? "Could not check message safety.");
+        return;
+      }
+      setSafetyCheck(data.check);
     } finally { setSafetyLoading(false); }
   }
 
@@ -66,7 +127,7 @@ export function ParentCenterPage() {
     if (!encouragement.trim()) return;
     setSaving(true);
     try {
-      await saveParentSupport({ journeyId: journey.id, summary, encouragementText: encouragement, activitySuggestion: activity });
+      await saveParentSupport({ journeyId: activeJourney.id, summary, encouragementText: encouragement, activitySuggestion: activity });
       setSaved(true);
     } finally { setSaving(false); }
   }
@@ -75,13 +136,13 @@ export function ParentCenterPage() {
     <div className="grid gap-5 lg:grid-cols-2">
       <Panel>
         <p className="text-sm uppercase tracking-[0.25em] text-secondary">💛 Parent Center</p>
-        <h2 className="mt-3 font-display text-3xl text-foreground">Support your child's growth</h2>
+        <h2 className="mt-3 font-display text-3xl text-foreground">Support your child&apos;s growth</h2>
         <div className="mt-6 rounded-[1.5rem] bg-white/75 p-5 shadow-sm">
           <p className="text-xs uppercase tracking-[0.25em] text-muted">Active goal</p>
-          <h3 className="mt-2 text-xl font-semibold text-foreground">{journey.goal_title}</h3>
+          <h3 className="mt-2 text-xl font-semibold text-foreground">{activeJourney.goal_title}</h3>
           <div className="mt-4">
             <div className="flex justify-between text-sm mb-2">
-              <span className="text-muted">{journey.current_count}/{journey.target_count} {journey.unit}</span>
+              <span className="text-muted">{activeJourney.current_count}/{activeJourney.target_count} {activeJourney.unit}</span>
               <span className="font-semibold text-accent">{progress}%</span>
             </div>
             <div className="h-3 w-full rounded-full bg-gray-100"><div className="h-3 rounded-full bg-accent transition-all" style={{ width: `${progress}%` }} /></div>
@@ -92,8 +153,8 @@ export function ParentCenterPage() {
           {latestCheckIn ? (
             <>
               <p className="mt-3 font-medium text-foreground">{latestCheckIn.reflection_question}</p>
-              <p className="mt-2 text-sm text-muted italic">"{latestCheckIn.child_answer}"</p>
-              <p className="mt-3 text-xs text-muted">Progress added: +{latestCheckIn.progress_added} {journey.unit}</p>
+              <p className="mt-2 text-sm text-muted italic">&quot;{latestCheckIn.child_answer}&quot;</p>
+              <p className="mt-3 text-xs text-muted">Progress added: +{latestCheckIn.progress_added} {activeJourney.unit}</p>
             </>
           ) : (
             <p className="mt-3 text-sm text-muted">No check-ins yet. Ask your child to do their first check-in!</p>
@@ -103,10 +164,10 @@ export function ParentCenterPage() {
           <div className="mt-5">
             <p className="text-sm font-medium text-foreground mb-3">All check-ins ({checkIns.length})</p>
             <div className="space-y-3 max-h-48 overflow-y-auto">
-              {checkIns.slice(1).map((c: any) => (
+              {checkIns.slice(1).map((c) => (
                 <div key={c.id} className="rounded-[1.25rem] bg-white/60 p-4 text-sm">
-                  <p className="text-muted italic">"{c.child_answer}"</p>
-                  <p className="mt-1 text-xs text-muted">+{c.progress_added} {journey.unit}</p>
+                  <p className="text-muted italic">&quot;{c.child_answer}&quot;</p>
+                  <p className="mt-1 text-xs text-muted">+{c.progress_added} {activeJourney.unit}</p>
                 </div>
               ))}
             </div>
@@ -119,6 +180,7 @@ export function ParentCenterPage() {
         <form className="mt-6" onSubmit={handleGenerateSummary}>
           <button type="submit" className="w-full rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:bg-accent-strong">{loadingSummary ? "Generating..." : "1. Generate parent summary"}</button>
         </form>
+        {actionError && <p className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm font-medium text-red-600">{actionError}</p>}
         {summary && (
           <div className="mt-4 rounded-[1.5rem] bg-white/75 p-4 shadow-sm">
             <p className="text-sm text-foreground">{summary}</p>

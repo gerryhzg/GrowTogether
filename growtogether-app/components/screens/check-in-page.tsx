@@ -21,13 +21,14 @@ export function CheckInPage() {
     return <EmptyState title="A journey comes first" description="Create a goal from the child's interests first, then come back here for daily progress and reflection." ctaHref="/discover" ctaLabel="Create a journey" />;
   }
 
-  const progress = Math.min(100, Math.round((journey.current_count / journey.target_count) * 100));
+  const activeJourney = journey;
+  const progress = Math.min(100, Math.round((activeJourney.current_count / activeJourney.target_count) * 100));
 
   async function handleGenerateQuestion(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setLoadingQuestion(true);
     try {
-      const response = await fetch("/api/ai/reflection", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ journey: { goalTitle: journey.goal_title, goalDescription: journey.goal_description, linkedInterest: journey.linked_interest }, progressAdded }) });
+      const response = await fetch("/api/ai/reflection", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ journey: { goalTitle: activeJourney.goal_title, goalDescription: activeJourney.goal_description, linkedInterest: activeJourney.linked_interest }, progressAdded }) });
       const data = await response.json();
       setQuestion(data.question);
     } finally { setLoadingQuestion(false); }
@@ -37,7 +38,7 @@ export function CheckInPage() {
     if (!question.trim() || !answer.trim()) return;
     setSaving(true);
     try {
-      await saveCheckIn({ journeyId: journey.id, progressAdded, reflectionQuestion: question, childAnswer: answer });
+      await saveCheckIn({ journeyId: activeJourney.id, progressAdded, reflectionQuestion: question, childAnswer: answer });
       setSaved(true);
       setQuestion(""); setAnswer(""); setProgressAdded(1);
     } finally { setSaving(false); }
@@ -52,11 +53,11 @@ export function CheckInPage() {
         {saved && <div className="mt-4 rounded-2xl bg-green-50 px-4 py-3 text-sm font-medium text-green-700">🎉 Check-in saved! Your parent can now see your progress!</div>}
         <div className="mt-6 rounded-[1.5rem] bg-white/75 p-5 shadow-sm">
           <p className="text-xs uppercase tracking-[0.25em] text-muted">Current goal</p>
-          <h3 className="mt-2 text-2xl font-semibold text-foreground">{journey.goal_title}</h3>
-          <p className="mt-2 text-muted">{journey.goal_description}</p>
+          <h3 className="mt-2 text-2xl font-semibold text-foreground">{activeJourney.goal_title}</h3>
+          <p className="mt-2 text-muted">{activeJourney.goal_description}</p>
           <div className="mt-5">
             <div className="flex justify-between text-sm mb-2">
-              <span className="text-muted">{journey.current_count}/{journey.target_count} {journey.unit}</span>
+              <span className="text-muted">{activeJourney.current_count}/{activeJourney.target_count} {activeJourney.unit}</span>
               <span className="font-semibold text-accent">{progress}%</span>
             </div>
             <div className="h-3 w-full rounded-full bg-gray-100"><div className="h-3 rounded-full bg-accent transition-all" style={{ width: `${progress}%` }} /></div>
