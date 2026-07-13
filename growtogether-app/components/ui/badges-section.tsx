@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Badge } from "@/lib/types";
+import { useChildTheme } from "@/components/providers/child-theme-context";
 
 interface BadgesSectionProps {
   badges: Badge[];
@@ -32,6 +33,7 @@ interface ConfettiPiece {
 }
 
 export function BadgesSection({ badges }: BadgesSectionProps) {
+  const { isNeonQuest } = useChildTheme();
   const [celebrating, setCelebrating] = useState<string | null>(null);
   const [confetti, setConfetti] = useState<ConfettiPiece[]>([]);
   const unlockedBadges = badges.filter((b) => b.unlockedAt !== null);
@@ -80,9 +82,9 @@ export function BadgesSection({ badges }: BadgesSectionProps) {
       ))}
 
       <div className="rounded-[2rem] bg-white/80 p-6 shadow-sm">
-        <p className="text-sm uppercase tracking-[0.25em] text-secondary">Achievement Badges</p>
+        <p className="text-sm uppercase tracking-[0.25em] text-secondary">{isNeonQuest ? "Flex Badges" : "Achievement Badges"}</p>
         <h3 className="mt-2 text-2xl font-semibold text-foreground">
-          {unlockedBadges.length}/{badges.length} unlocked ✨
+          {unlockedBadges.length}/{badges.length} {isNeonQuest ? "unlocked. W energy." : "unlocked"}
         </h3>
 
         <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-5">
@@ -107,10 +109,10 @@ export function BadgesSection({ badges }: BadgesSectionProps) {
                 <div className={`text-3xl ${isCelebrating ? "float-emoji" : ""}`}>{icon}</div>
                 <p className="mt-2 text-xs font-semibold text-foreground leading-4">{badge.title}</p>
                 {unlocked && !isCelebrating && (
-                  <p className="mt-1 text-xs text-accent font-medium">Tap! 🎉</p>
+                  <p className="mt-1 text-xs text-accent font-medium">{isNeonQuest ? "Flex it" : "Tap!"}</p>
                 )}
                 {isCelebrating && (
-                  <p className="mt-1 text-xs text-white font-bold">🎊 YAY!</p>
+                  <p className="mt-1 text-xs text-white font-bold">{isNeonQuest ? "BIG W" : "YAY!"}</p>
                 )}
                 {!unlocked && (
                   <p className="mt-1 text-xs text-muted leading-3">{badge.description}</p>

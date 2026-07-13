@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { useAuth } from "@/components/providers/auth-context";
+import { useChildTheme } from "@/components/providers/child-theme-context";
 import { useInterests, useJourney } from "@/lib/supabase-hooks";
 import { Panel } from "@/components/ui/panel";
 import { GoalExplanationCard } from "@/components/ui/goal-explanation-card";
@@ -10,6 +11,7 @@ import { GoalSuggestion, GoalSuggestionResponse, InterestName } from "@/lib/type
 
 export function DiscoverPage() {
   const { user } = useAuth();
+  const { isNeonQuest } = useChildTheme();
   const { interests, saveInterests } = useInterests(user?.familyId);
   const { journey, createJourney } = useJourney(user?.familyId);
 
@@ -85,7 +87,11 @@ export function DiscoverPage() {
         return;
       }
 
-      setJourneyMessage("Journey started! Waiting for your parent to approve your goal.");
+      setJourneyMessage(
+        isNeonQuest
+          ? "Quest queued. Waiting for parent approval, then it is go time."
+          : "Journey started! Waiting for your parent to approve your goal.",
+      );
     } finally {
       setStartingJourney(false);
     }
@@ -113,33 +119,81 @@ export function DiscoverPage() {
   return (
     <div className="grid gap-5 xl:grid-cols-[1.05fr_0.95fr]">
       <Panel>
-        <p className="text-sm uppercase tracking-[0.25em] text-secondary">{isChild ? "What do you love?" : "Screen 2"}</p>
-        <h2 className="mt-3 font-display text-4xl text-foreground">{isChild ? "Rate what makes you excited!" : "Discover what the child loves most."}</h2>
-        <p className="mt-3 max-w-2xl text-muted">{isChild ? "Move the slider to show how much you love each thing! Your parent will see your choices." : "Rate each interest from 1 to 5."}</p>
-        {saved && <div className="mt-4 rounded-2xl bg-green-50 px-4 py-3 text-sm font-medium text-green-700">Your interests are saved! Your parent can now see them.</div>}
+        <p className="text-sm uppercase tracking-[0.25em] text-secondary">
+          {isChild
+            ? isNeonQuest
+              ? "Stat Builder"
+              : "What do you love?"
+            : "Screen 2"}
+        </p>
+        <h2 className="mt-3 font-display text-4xl text-foreground">
+          {isChild
+            ? isNeonQuest
+              ? "Build your loadout. Make it loud."
+              : "Rate what makes you excited!"
+            : "Discover what the child loves most."}
+        </h2>
+        <p className="mt-3 max-w-2xl text-muted">
+          {isChild
+            ? isNeonQuest
+              ? "Slide your stats. The higher the score, the more the app cooks up quests that actually hit."
+              : "Move the slider to show how much you love each thing! Your parent will see your choices."
+            : "Rate each interest from 1 to 5."}
+        </p>
+        {saved && (
+          <div className="mt-4 rounded-2xl bg-green-50 px-4 py-3 text-sm font-medium text-green-700">
+            {isNeonQuest
+              ? "Stats saved. Quest engine is cooking."
+              : "Your interests are saved! Your parent can now see them."}
+          </div>
+        )}
         <form className="mt-8 space-y-5" onSubmit={handleGenerateGoals}>
           {INTEREST_OPTIONS.map((interest) => (
             <label key={interest} className="block rounded-[1.5rem] bg-white/75 p-4 shadow-sm">
               <div className="flex items-center justify-between gap-4">
                 <div>
                   <p className="text-lg font-semibold text-foreground">{interest}</p>
-                  <p className="text-sm text-muted">{isChild ? "How much do you love this?" : "How excited does this feel?"}</p>
+                  <p className="text-sm text-muted">
+                    {isChild
+                      ? isNeonQuest
+                        ? "How hard does this go?"
+                        : "How much do you love this?"
+                      : "How excited does this feel?"}
+                  </p>
                 </div>
                 <span className="rounded-full bg-accent-soft px-3 py-1 text-sm font-semibold text-accent-strong">{ratings[interest]}/5</span>
               </div>
               <input className="mt-4 w-full accent-accent" type="range" min={1} max={5} value={ratings[interest]} onChange={(e) => setRatings((c) => ({ ...c, [interest]: Number(e.target.value) }))} />
             </label>
           ))}
-          <button type="submit" className="rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:bg-accent-strong">{loading ? "Generating..." : isChild ? "Find my goals!" : "Generate matching goals"}</button>
+          <button type="submit" className="rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:bg-accent-strong">{loading ? (isNeonQuest ? "Cooking quests..." : "Generating...") : isChild ? isNeonQuest ? "Cook my quests" : "Find my goals!" : "Generate matching goals"}</button>
         </form>
       </Panel>
 
       <Panel>
-        <p className="text-sm uppercase tracking-[0.25em] text-secondary">Suggested goals</p>
-        <h3 className="mt-2 text-2xl font-semibold text-foreground">{isChild ? "Your perfect goals!" : "Goals grounded in real interests"}</h3>
+        <p className="text-sm uppercase tracking-[0.25em] text-secondary">
+          {isNeonQuest ? "Quest Drops" : "Suggested goals"}
+        </p>
+        <h3 className="mt-2 text-2xl font-semibold text-foreground">
+          {isChild
+            ? isNeonQuest
+              ? "Pick the mission with main-character energy."
+              : "Your perfect goals!"
+            : "Goals grounded in real interests"}
+        </h3>
         {isChild && journey && (
           <div className={`mt-4 rounded-2xl px-4 py-3 text-sm font-medium ${journey.approved_by_parent ? "bg-green-50 text-green-700" : "bg-yellow-50 text-yellow-700"}`}>
-            {journey.approved_by_parent ? journey.parent_override ? "Your parent changed your goal! Check it out!" : "Your parent approved your goal! Let's go!" : "Waiting for your parent to approve your goal..."}
+            {journey.approved_by_parent
+              ? journey.parent_override
+                ? isNeonQuest
+                  ? "Parent remixed the quest. Check the new build."
+                  : "Your parent changed your goal! Check it out!"
+                : isNeonQuest
+                  ? "Quest approved. We are so back."
+                  : "Your parent approved your goal! Let's go!"
+              : isNeonQuest
+                ? "Quest pending. Parent approval loading..."
+                : "Waiting for your parent to approve your goal..."}
           </div>
         )}
         <div className="mt-6 space-y-3">
@@ -151,16 +205,16 @@ export function DiscoverPage() {
                   <p className="text-xs uppercase tracking-[0.25em] text-secondary">{goal.linkedInterest}</p>
                   <p className="mt-2 text-lg font-semibold text-foreground">{goal.title}</p>
                   <p className="mt-2 text-sm text-muted">{goal.description}</p>
-                  <p className="mt-3 text-sm font-medium text-foreground">Goal: {goal.targetCount} {goal.unit}</p>
+                  <p className="mt-3 text-sm font-medium text-foreground">{isNeonQuest ? "Win condition" : "Goal"}: {goal.targetCount} {goal.unit}</p>
                 </button>
                 {active && <div className="mt-3"><GoalExplanationCard explanation={explanations[index] ?? null} loading={loadingExplanations[index] ?? false} /></div>}
               </div>
             );
-          }) : <div className="rounded-[1.5rem] border border-dashed border-border px-4 py-8 text-sm text-muted">{isChild ? "Rate your interests above and click Find my goals!" : "Rate interests above to see suggestions."}</div>}
+          }) : <div className="rounded-[1.5rem] border border-dashed border-border px-4 py-8 text-sm text-muted">{isChild ? isNeonQuest ? "Set your stats, then let the quest engine cook." : "Rate your interests above and click Find my goals!" : "Rate interests above to see suggestions."}</div>}
         </div>
         {goalSuggestions.length > 0 && (
           <div className="mt-8 space-y-4 rounded-[1.5rem] bg-white/75 p-5 shadow-sm">
-            <p className="text-sm uppercase tracking-[0.25em] text-muted">Customise</p>
+            <p className="text-sm uppercase tracking-[0.25em] text-muted">{isNeonQuest ? "Remix Quest" : "Customise"}</p>
             <input className="w-full rounded-2xl border border-border bg-white px-4 py-3" value={customTitle} onChange={(e) => setCustomTitle(e.target.value)} placeholder="Goal title" />
             <textarea className="w-full min-h-20 rounded-2xl border border-border bg-white px-4 py-3" value={customDescription} onChange={(e) => setCustomDescription(e.target.value)} placeholder="Goal description" />
             <div className="grid gap-3 sm:grid-cols-2">
@@ -169,7 +223,7 @@ export function DiscoverPage() {
             </div>
             {journeyMessage && <p className="rounded-2xl bg-green-50 px-4 py-3 text-sm font-medium text-green-700">{journeyMessage}</p>}
             {journeyError && <p className="rounded-2xl bg-red-50 px-4 py-3 text-sm font-medium text-red-600">{journeyError}</p>}
-            <button type="button" disabled={startingJourney || !customTitle.trim()} onClick={handleStartJourney} className="rounded-full bg-secondary px-5 py-3 text-sm font-semibold text-white transition hover:bg-secondary/90 disabled:opacity-50">{startingJourney ? "Starting..." : isChild ? "Start my journey!" : "Start this growth journey"}</button>
+            <button type="button" disabled={startingJourney || !customTitle.trim()} onClick={handleStartJourney} className="rounded-full bg-secondary px-5 py-3 text-sm font-semibold text-white transition hover:bg-secondary/90 disabled:opacity-50">{startingJourney ? isNeonQuest ? "Loading quest..." : "Starting..." : isChild ? isNeonQuest ? "Launch the quest" : "Start my journey!" : "Start this growth journey"}</button>
           </div>
         )}
       </Panel>

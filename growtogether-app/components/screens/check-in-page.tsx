@@ -2,12 +2,14 @@
 
 import { FormEvent, useState } from "react";
 import { useAuth } from "@/components/providers/auth-context";
+import { useChildTheme } from "@/components/providers/child-theme-context";
 import { useJourney, useCheckIns } from "@/lib/supabase-hooks";
 import { Panel } from "@/components/ui/panel";
 import { EmptyState } from "@/components/empty-state";
 
 export function CheckInPage() {
   const { user } = useAuth();
+  const { isNeonQuest } = useChildTheme();
   const { journey } = useJourney(user?.familyId);
   const { saveCheckIn } = useCheckIns(user?.familyId, journey?.id);
   const [progressAdded, setProgressAdded] = useState(1);
@@ -22,9 +24,13 @@ export function CheckInPage() {
     return (
       <EmptyState
         title="A journey comes first"
-        description="Create a goal from the child's interests first, then come back here for daily progress and reflection."
+        description={
+          isNeonQuest
+            ? "No quest loaded. Hit Quest Lab first so you have something worth grinding."
+            : "Create a goal from the child's interests first, then come back here for daily progress and reflection."
+        }
         ctaHref="/discover"
-        ctaLabel="Create a journey"
+        ctaLabel={isNeonQuest ? "Open Quest Lab" : "Create a journey"}
       />
     );
   }
@@ -134,18 +140,22 @@ export function CheckInPage() {
     <div className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
       <Panel>
         <p className="text-sm uppercase tracking-[0.25em] text-secondary">
-          Daily Check-In
+          {isNeonQuest ? "Mission Log" : "Daily Check-In"}
         </p>
         <h2 className="mt-3 font-display text-4xl text-foreground">
-          How did it go today?
+          {isNeonQuest ? "Drop the XP. What went down?" : "How did it go today?"}
         </h2>
         <p className="mt-3 text-muted">
-          Share your progress and how it felt. Your parent will see this.
+          {isNeonQuest
+            ? "Log the run, spill the debrief, and let your squad see the W."
+            : "Share your progress and how it felt. Your parent will see this."}
         </p>
 
         {saved && (
           <div className="mt-4 rounded-2xl bg-green-50 px-4 py-3 text-sm font-medium text-green-700">
-            Check-in saved. Your parent can now see your progress.
+            {isNeonQuest
+              ? "Mission posted. Squad can see the W."
+              : "Check-in saved. Your parent can now see your progress."}
           </div>
         )}
         {error && (
@@ -156,7 +166,7 @@ export function CheckInPage() {
 
         <div className="mt-6 rounded-[1.5rem] bg-white/75 p-5 shadow-sm">
           <p className="text-xs uppercase tracking-[0.25em] text-muted">
-            Current goal
+            {isNeonQuest ? "Current Quest" : "Current goal"}
           </p>
           <h3 className="mt-2 text-2xl font-semibold text-foreground">
             {activeJourney.goal_title}
@@ -184,6 +194,7 @@ export function CheckInPage() {
             <label className="block rounded-[1.5rem] bg-white/75 p-5 shadow-sm">
               <span className="text-sm font-medium text-foreground">
                 How much did you do today?
+                {isNeonQuest ? " Drop the XP count." : ""}
               </span>
               <input
                 className="mt-3 w-full rounded-2xl border border-border bg-white px-4 py-3"
@@ -198,7 +209,9 @@ export function CheckInPage() {
                 }}
               />
               <p className="mt-2 text-sm text-muted">
-                You can add up to {remainingProgress} {activeJourney.unit}.
+                {isNeonQuest
+                  ? `Max XP drop: ${remainingProgress} ${activeJourney.unit}. Do not overshoot the boss bar.`
+                  : `You can add up to ${remainingProgress} ${activeJourney.unit}.`}
               </p>
             </label>
             <button
@@ -206,45 +219,50 @@ export function CheckInPage() {
               className="rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:bg-accent-strong"
             >
               {loadingQuestion
-                ? "Generating question..."
-                : "Generate reflection question"}
+                ? isNeonQuest
+                  ? "Spawning prompt..."
+                  : "Generating question..."
+                : isNeonQuest
+                  ? "Spawn debrief prompt"
+                  : "Generate reflection question"}
             </button>
           </form>
         ) : (
           <div className="mt-6 rounded-[1.5rem] bg-green-50 px-5 py-4 text-sm font-medium text-green-700">
-            This journey is complete. Start a new journey from Discover when
-            you are ready.
+            {isNeonQuest
+              ? "Quest cleared. Massive W. Hit Quest Lab when you want the next boss fight."
+              : "This journey is complete. Start a new journey from Discover when you are ready."}
           </div>
         )}
       </Panel>
 
       <Panel>
         <p className="text-sm uppercase tracking-[0.25em] text-secondary">
-          Reflection
+          {isNeonQuest ? "Debrief Zone" : "Reflection"}
         </p>
         <h3 className="mt-2 text-2xl font-semibold text-foreground">
-          How did it feel?
+          {isNeonQuest ? "Be real. How was the run?" : "How did it feel?"}
         </h3>
         <label className="mt-6 block">
           <span className="text-sm font-medium text-foreground">
-            Reflection question
+            {isNeonQuest ? "Debrief prompt" : "Reflection question"}
           </span>
           <textarea
             className="mt-2 min-h-24 w-full rounded-2xl border border-border bg-white px-4 py-3"
             value={question}
             onChange={(event) => setQuestion(event.target.value)}
-            placeholder="Generate a question or type one yourself."
+            placeholder={isNeonQuest ? "Spawn a prompt or freestyle it." : "Generate a question or type one yourself."}
           />
         </label>
         <label className="mt-5 block">
           <span className="text-sm font-medium text-foreground">
-            Your answer
+            {isNeonQuest ? "Your take" : "Your answer"}
           </span>
           <textarea
             className="mt-2 min-h-32 w-full rounded-2xl border border-border bg-white px-4 py-3"
             value={answer}
             onChange={(event) => setAnswer(event.target.value)}
-            placeholder="What felt exciting, hard, or surprising today?"
+            placeholder={isNeonQuest ? "What was fire, awkward, clutch, or lowkey hard?" : "What felt exciting, hard, or surprising today?"}
           />
         </label>
         <button
@@ -253,7 +271,7 @@ export function CheckInPage() {
           disabled={saving || !canCheckIn || !question.trim() || !answer.trim()}
           className="mt-6 rounded-full bg-secondary px-5 py-3 text-sm font-semibold text-white transition hover:bg-secondary/90 disabled:opacity-50"
         >
-          {saving ? "Saving..." : "Save check-in"}
+          {saving ? (isNeonQuest ? "Posting..." : "Saving...") : isNeonQuest ? "Post mission log" : "Save check-in"}
         </button>
       </Panel>
     </div>

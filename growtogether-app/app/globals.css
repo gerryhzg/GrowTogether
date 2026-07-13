@@ -14,6 +14,9 @@
   --secondary-soft: #d8ebe4;
   --sun: #f3bf62;
   --shadow: 0 20px 60px rgba(70, 43, 27, 0.12);
+  --app-background:
+    linear-gradient(135deg, #fff8ef 0%, #f4efe3 48%, #efe4d1 100%);
+  --mobile-nav-background: rgba(255, 248, 239, 0.95);
 }
 
 /* Child theme - fun and cute */
@@ -28,6 +31,28 @@
   --secondary: #7c3aed;
   --secondary-soft: #ede9fe;
   --sun: #fbbf24;
+  --app-background: linear-gradient(135deg, #fff0f8 0%, #f0e6ff 100%);
+  --mobile-nav-background: rgba(255, 240, 255, 0.95);
+}
+
+/* Child theme - Neon Quest game HUD */
+[data-role="child"][data-child-theme="neon-quest"] {
+  --background: #07111f;
+  --foreground: #e6fbff;
+  --surface: rgba(9, 22, 42, 0.88);
+  --surface-strong: #0d1c33;
+  --muted: #9fb5c8;
+  --border: rgba(86, 241, 255, 0.28);
+  --accent: #18e0ff;
+  --accent-strong: #00a8d6;
+  --accent-soft: rgba(24, 224, 255, 0.16);
+  --secondary: #b8ff3d;
+  --secondary-soft: rgba(184, 255, 61, 0.16);
+  --sun: #ff3df2;
+  --shadow: 0 22px 60px rgba(0, 0, 0, 0.34);
+  --app-background:
+    linear-gradient(135deg, #050914 0%, #07111f 42%, #150c2d 100%);
+  --mobile-nav-background: rgba(5, 9, 20, 0.94);
 }
 
 /* Parent theme - clean and mature */
@@ -42,6 +67,8 @@
   --secondary: #2c5282;
   --secondary-soft: #bee3f8;
   --sun: #f6ad55;
+  --app-background: linear-gradient(135deg, #f0f4f8 0%, #e8f4f0 100%);
+  --mobile-nav-background: rgba(240, 244, 248, 0.95);
 }
 
 @theme inline {
@@ -78,6 +105,11 @@ body {
   transition: background 0.3s ease;
 }
 
+.app-shell {
+  background: var(--app-background);
+  transition: background 0.25s ease, color 0.25s ease;
+}
+
 a { color: inherit; text-decoration: none; }
 
 button, input, textarea, select { font: inherit; }
@@ -89,6 +121,14 @@ button, input, textarea, select { font: inherit; }
   backdrop-filter: blur(18px);
   border: 1px solid var(--border);
   box-shadow: var(--shadow);
+}
+
+.mobile-nav {
+  background: var(--mobile-nav-background);
+}
+
+.family-code-card {
+  background: color-mix(in srgb, var(--surface-strong) 78%, white 22%);
 }
 
 .warm-ring {
@@ -123,4 +163,81 @@ button, input, textarea, select { font: inherit; }
 .float-emoji {
   animation: float 3s ease-in-out infinite;
   display: inline-block;
+}
+
+[data-role="child"][data-child-theme="neon-quest"] .glass-panel {
+  border-radius: 12px;
+  box-shadow:
+    0 0 0 1px rgba(24, 224, 255, 0.08),
+    0 18px 55px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+[data-role="child"][data-child-theme="neon-quest"] .warm-ring {
+  box-shadow:
+    0 0 0 1px rgba(24, 224, 255, 0.3),
+    0 0 30px rgba(24, 224, 255, 0.12),
+    0 24px 70px rgba(0, 0, 0, 0.4);
+}
+
+[data-role="child"][data-child-theme="neon-quest"] h1,
+[data-role="child"][data-child-theme="neon-quest"] h2,
+[data-role="child"][data-child-theme="neon-quest"] h3 {
+  font-family: var(--font-sans), sans-serif;
+  letter-spacing: 0;
+}
+
+[data-role="child"][data-child-theme="neon-quest"] button,
+[data-role="child"][data-child-theme="neon-quest"] input,
+[data-role="child"][data-child-theme="neon-quest"] textarea,
+[data-role="child"][data-child-theme="neon-quest"] select {
+  border-radius: 8px;
+}
+
+[data-role="child"][data-child-theme="neon-quest"] input,
+[data-role="child"][data-child-theme="neon-quest"] textarea,
+[data-role="child"][data-child-theme="neon-quest"] select {
+  background: rgba(3, 10, 24, 0.76);
+  color: var(--foreground);
+  border-color: var(--border);
+}
+
+[data-role="child"][data-child-theme="neon-quest"] input[type="range"] {
+  accent-color: var(--secondary);
+}
+
+[data-role="child"][data-child-theme="neon-quest"] .theme-toggle {
+  background: rgba(24, 224, 255, 0.12);
+  border-color: rgba(24, 224, 255, 0.45);
+  color: var(--foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+[data-role="child"][data-child-theme="neon-quest"] .family-code-card {
+  background: rgba(184, 255, 61, 0.12);
+  border: 1px solid rgba(184, 255, 61, 0.32);
+}
+
+[data-role="child"][data-child-theme="neon-quest"] a.bg-accent,
+[data-role="child"][data-child-theme="neon-quest"] button.bg-accent,
+[data-role="child"][data-child-theme="neon-quest"] .bg-accent {
+  color: #03111a;
+  box-shadow: 0 0 24px rgba(24, 224, 255, 0.24);
+}
+
+[data-role="child"][data-child-theme="neon-quest"] .bg-white\/60,
+[data-role="child"][data-child-theme="neon-quest"] .bg-white\/70,
+[data-role="child"][data-child-theme="neon-quest"] .bg-white\/75,
+[data-role="child"][data-child-theme="neon-quest"] .bg-white\/80 {
+  background: rgba(11, 27, 49, 0.78);
+}
+
+[data-role="child"][data-child-theme="neon-quest"] .bg-gray-100 {
+  background: rgba(159, 181, 200, 0.18);
+}
+
+[data-role="child"][data-child-theme="neon-quest"] .mobile-nav {
+  border-color: rgba(24, 224, 255, 0.28);
+  box-shadow: 0 -16px 40px rgba(0, 0, 0, 0.34);
 }
