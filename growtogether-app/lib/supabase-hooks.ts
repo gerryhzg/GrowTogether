@@ -147,10 +147,41 @@ export function useCheckIns(familyId: string | undefined, journeyId: string | un
     return () => { supabase.removeChannel(channel); };
   }, [familyId, journeyId]);
 
-  async function saveCheckIn(data: { journeyId: string; progressAdded: number; reflectionQuestion: string; childAnswer: string; }) {
-    if (!familyId) return;
-    await supabase.from("check_ins").insert({ family_id: familyId, journey_id: data.journeyId, progress_added: data.progressAdded, reflection_question: data.reflectionQuestion, child_answer: data.childAnswer });
-    await supabase.rpc("increment_journey_progress", { journey_id: data.journeyId, amount: data.progressAdded });
+  async function saveCheckIn(data: { journeyId: string; progressAdded: number; reflectionQuestion: string; childAnswer: string; }): Promise<{ error: SupabaseErrorLike | null }> {
+    if (!familyId) {
+      return { error: { message: "No family is selected. Please sign in again." } };
+    }
+
+    const { data: journey, error: journeyError } = await supabase
+      .from("journeys")
+      .select("target_count,current_count")
+      .eq("id", data.journeyId)
+      .single<{ target_count: number; current_count: number }>();
+
+    if (journeyError || !journey) {
+      return { error: { message: journeyError?.message ?? "Could not find this journey." } };
+    }
+
+    const remainingProgress = journey.target_count - journey.current_count;
+    if (remainingProgress <= 0) {
+      return { error: { message: "This goal is already complete." } };
+    }
+
+    if (data.progressAdded < 1 || data.progressAdded > remainingProgress) {
+      return { error: { message: `Progress must be between 1 and ${remainingProgress}.` } };
+    }
+
+    const { error: insertError } = await supabase.from("check_ins").insert({ family_id: familyId, journey_id: data.journeyId, progress_added: data.progressAdded, reflection_question: data.reflectionQuestion, child_answer: data.childAnswer });
+    if (insertError) {
+      return { error: { message: insertError.message } };
+    }
+
+    const { error: progressError } = await supabase.rpc("increment_journey_progress", { journey_id: data.journeyId, amount: data.progressAdded });
+    if (progressError) {
+      return { error: { message: progressError.message } };
+    }
+
+    return { error: null };
   }
 
   return { checkIns, saveCheckIn };

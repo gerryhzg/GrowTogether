@@ -65,7 +65,7 @@ returns void
 language sql
 as $$
   update public.journeys
-  set current_count = current_count + $2,
+  set current_count = least(target_count, current_count + $2),
       updated_at = now()
   where id = $1;
 $$;
