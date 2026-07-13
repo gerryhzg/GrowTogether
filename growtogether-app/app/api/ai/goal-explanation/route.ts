@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { fallbackGoalExplanation } from "@/lib/ai/fallbacks";
-import { generateGoalExplanationWithAI } from "@/lib/ai/openai";
+import { generateGoalExplanationWithAI } from "@/lib/ai/deepseek";
 import { ExplanationRequest, ExplanationResponse } from "@/lib/types";
 
 export async function POST(request: Request) {

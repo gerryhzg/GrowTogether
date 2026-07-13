@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { fallbackDifficultyAdjustment } from "@/lib/ai/fallbacks";
-import { generateDifficultyAdjustmentWithAI } from "@/lib/ai/openai";
+import { generateDifficultyAdjustmentWithAI } from "@/lib/ai/deepseek";
 import { DifficultyRequest, DifficultyResponse } from "@/lib/types";
 
 export async function POST(request: Request) {

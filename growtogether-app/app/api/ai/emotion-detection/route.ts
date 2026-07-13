@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { fallbackEmotionDetection } from "@/lib/ai/fallbacks";
-import { generateEmotionDetectionWithAI } from "@/lib/ai/openai";
+import { generateEmotionDetectionWithAI } from "@/lib/ai/deepseek";
 import { EmotionRequest, EmotionResponse } from "@/lib/types";
 
 export async function POST(request: Request) {

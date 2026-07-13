@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { fallbackCoachScore } from "@/lib/ai/fallbacks";
-import { generateCoachScoreWithAI } from "@/lib/ai/openai";
+import { generateCoachScoreWithAI } from "@/lib/ai/deepseek";
 import { CoachScoreRequest, CoachScoreResponse } from "@/lib/types";
 
 export async function POST(request: Request) {

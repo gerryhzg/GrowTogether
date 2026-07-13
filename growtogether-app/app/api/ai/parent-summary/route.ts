@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { fallbackParentSummary } from "@/lib/ai/fallbacks";
-import { generateParentSummaryWithAI } from "@/lib/ai/openai";
+import { generateParentSummaryWithAI } from "@/lib/ai/deepseek";
 import { ParentSummaryRequest, ParentSummaryResponse } from "@/lib/types";
 
 export async function POST(request: Request) {

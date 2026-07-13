@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import type { ChatCompletionCreateParamsNonStreaming } from "openai/resources/chat/completions";
 import {
   GoalSuggestion,
   GoalSuggestionRequest,
@@ -14,18 +15,23 @@ import {
   StyledReflectionRequest,
   ExplanationRequest,
   SafetyCheckRequest,
+  WeeklyHighlight,
 } from "@/lib/types";
 
 let cachedClient: OpenAI | null = null;
 
+const DEEPSEEK_BASE_URL = "https://api.deepseek.com";
+const DEEPSEEK_MODEL = process.env.DEEPSEEK_MODEL ?? "deepseek-v4-flash";
+
 function getClient() {
-  if (!process.env.OPENAI_API_KEY) {
+  if (!process.env.DEEPSEEK_API_KEY) {
     return null;
   }
 
   if (!cachedClient) {
     cachedClient = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
+      apiKey: process.env.DEEPSEEK_API_KEY,
+      baseURL: DEEPSEEK_BASE_URL,
     });
   }
 
@@ -39,9 +45,9 @@ async function createStructuredJson(prompt: string) {
     return null;
   }
 
-  const response = await client.responses.create({
-    model: "gpt-4.1-mini",
-    input: [
+  const response = await client.chat.completions.create({
+    model: DEEPSEEK_MODEL,
+    messages: [
       {
         role: "system",
         content:
@@ -52,9 +58,16 @@ async function createStructuredJson(prompt: string) {
         content: prompt,
       },
     ],
+    max_tokens: 600,
+    response_format: { type: "json_object" },
+    stream: false,
+    temperature: 0.4,
+    thinking: { type: "disabled" },
+  } as ChatCompletionCreateParamsNonStreaming & {
+    thinking: { type: "disabled" };
   });
 
-  return response.output_text;
+  return response.choices[0]?.message.content ?? null;
 }
 
 export async function generateGoalsWithAI(payload: GoalSuggestionRequest) {
@@ -157,6 +170,19 @@ function isEmotionType(value: unknown): value is EmotionType {
   );
 }
 
+function isWeeklyHighlight(value: unknown): value is WeeklyHighlight {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+
+  const highlight = value as Record<string, unknown>;
+
+  return (
+    typeof highlight.weekStart === "string" &&
+    typeof highlight.highlight === "string"
+  );
+}
+
 function safeJsonParse(text: string | null) {
   if (!text) {
     return null;
@@ -171,7 +197,6 @@ function safeJsonParse(text: string | null) {
 
 // Feature 1: AI Growth Coach Score
 export async function generateCoachScoreWithAI(payload: CoachScoreRequest) {
-  const recentCheckIns = payload.checkIns.slice(-5);
   const checkInCount = payload.checkIns.length;
   
   const text = await createStructuredJson(`Return JSON with shape {"consistency":"","reflectionDepth":"","motivation":""}. Analyze this journey and check-ins:
@@ -264,7 +289,12 @@ Create uplifting, specific weekly highlights that celebrate the child's effort.`
     return null;
   }
   
-  return { highlights: parsed.highlights as any[] };
+  const highlights = parsed.highlights.filter(isWeeklyHighlight);
+  if (highlights.length === 0) {
+    return null;
+  }
+
+  return { highlights };
 }
 
 // Feature 6: Personalized Reflection Question Styles

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { fallbackSafetyCheck } from "@/lib/ai/fallbacks";
-import { generateSafetyCheckWithAI } from "@/lib/ai/openai";
+import { generateSafetyCheckWithAI } from "@/lib/ai/deepseek";
 import { SafetyCheckRequest, SafetyCheckResponse } from "@/lib/types";
 
 export async function POST(request: Request) {

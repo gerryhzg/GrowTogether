@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { fallbackNextStep } from "@/lib/ai/fallbacks";
-import { generateNextStepWithAI } from "@/lib/ai/openai";
+import { generateNextStepWithAI } from "@/lib/ai/deepseek";
 import { NextStepRequest, NextStepResponse } from "@/lib/types";
 
 export async function POST(request: Request) {

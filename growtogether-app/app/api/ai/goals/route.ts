@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { fallbackGoalSuggestions } from "@/lib/ai/fallbacks";
-import { generateGoalsWithAI } from "@/lib/ai/openai";
+import { generateGoalsWithAI } from "@/lib/ai/deepseek";
 import { GoalSuggestionRequest, GoalSuggestionResponse } from "@/lib/types";
 
 export async function POST(request: Request) {
