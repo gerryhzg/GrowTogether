@@ -1,6 +1,14 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from "react";
+import { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase-client";
 
 export type UserRole = "child" | "parent";
@@ -16,13 +24,43 @@ export interface AuthUser {
 
 interface AuthContextValue {
   user: AuthUser | null;
-  login: (name: string, role: UserRole, emoji: string, roomCode: string) => Promise<{ error?: string }>;
-  logout: () => void;
+  signIn: (email: string, password: string) => Promise<{ error?: string }>;
+  createParentAccount: (data: AccountSetupData) => Promise<{ error?: string }>;
+  createChildAccount: (data: AccountSetupData) => Promise<{ error?: string }>;
+  logout: () => Promise<void>;
   isLoading: boolean;
 }
 
+type AccountSetupData = {
+  email: string;
+  password: string;
+  name: string;
+  emoji: string;
+  roomCode: string;
+};
+
+type FamilyProfileRow = {
+  id: string;
+  name: string;
+  role: UserRole;
+  emoji: string;
+  family_id: string;
+  families: {
+    room_code: string;
+  } | null;
+};
+
+type RpcProfileRow = {
+  id: string;
+  name: string;
+  role: UserRole;
+  emoji: string;
+  family_id: string;
+  room_code: string;
+};
+
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
-const AUTH_KEY = "growtogether.auth.v2";
+const LEGACY_AUTH_KEY = "growtogether.auth.v2";
 
 function serializeSupabaseError(error: unknown) {
   if (!error || typeof error !== "object") {
@@ -40,16 +78,15 @@ function serializeSupabaseError(error: unknown) {
     code: typeof source.code === "string" ? source.code : undefined,
     details: typeof source.details === "string" ? source.details : undefined,
     hint: typeof source.hint === "string" ? source.hint : undefined,
-    message: typeof source.message === "string" ? source.message : String(error),
+    message:
+      typeof source.message === "string" ? source.message : String(error),
   };
 }
 
 function getSupabaseErrorMessage(error: unknown) {
   const { message } = serializeSupabaseError(error);
-  if (message) {
-    if (process.env.NODE_ENV === "development") {
-      return message;
-    }
+  if (message && process.env.NODE_ENV === "development") {
+    return message;
   }
   return "Please try again.";
 }
@@ -58,82 +95,204 @@ function warnHandledSupabaseError(message: string, error: unknown) {
   console.warn(message, serializeSupabaseError(error));
 }
 
+function normalizeRoomCode(roomCode: string) {
+  return roomCode.trim().toUpperCase();
+}
+
+function toAuthUser(row: FamilyProfileRow | RpcProfileRow): AuthUser {
+  const familyCode =
+    "room_code" in row ? row.room_code : row.families?.room_code ?? "";
+
+  return {
+    id: row.id,
+    name: row.name,
+    role: row.role,
+    emoji: row.emoji,
+    familyCode,
+    familyId: row.family_id,
+  };
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    queueMicrotask(() => {
-      const stored = localStorage.getItem(AUTH_KEY);
-      if (stored) {
-        try { setUser(JSON.parse(stored)); } catch {}
-      }
+  const loadProfile = useCallback(async (session: Session | null) => {
+    if (!session?.user) {
+      setUser(null);
       setIsLoading(false);
-    });
+      return false;
+    }
+
+    const { data, error } = await supabase
+      .from("family_users")
+      .select("id,name,role,emoji,family_id,families!inner(room_code)")
+      .eq("auth_user_id", session.user.id)
+      .single<FamilyProfileRow>();
+
+    if (error) {
+      warnHandledSupabaseError("Could not load signed-in profile", error);
+      setUser(null);
+      setIsLoading(false);
+      return false;
+    }
+
+    setUser(toAuthUser(data));
+    setIsLoading(false);
+    return true;
   }, []);
 
-  async function login(name: string, role: UserRole, emoji: string, roomCode: string) {
-    const code = roomCode.trim().toUpperCase();
-    let familyId = "";
+  useEffect(() => {
+    localStorage.removeItem(LEGACY_AUTH_KEY);
 
-    const { data: existingFamily, error: familyLookupError } = await supabase
-      .from("families")
-      .select("id")
-      .eq("room_code", code)
-      .maybeSingle();
+    queueMicrotask(async () => {
+      const { data } = await supabase.auth.getSession();
+      await loadProfile(data.session);
+    });
 
-    if (familyLookupError) {
-      warnHandledSupabaseError("Could not look up family", familyLookupError);
-      return { error: `Could not look up family. ${getSupabaseErrorMessage(familyLookupError)}` };
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      queueMicrotask(() => {
+        loadProfile(session);
+      });
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [loadProfile]);
+
+  async function signIn(email: string, password: string) {
+    setIsLoading(true);
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password,
+    });
+
+    if (error) {
+      setIsLoading(false);
+      return { error: `Could not sign in. ${getSupabaseErrorMessage(error)}` };
     }
 
-    if (existingFamily) {
-      familyId = existingFamily.id;
-    } else {
-      const { data: newFamily, error } = await supabase
-        .from("families")
-        .insert({ room_code: code })
-        .select("id")
-        .single();
-      if (error) {
-        warnHandledSupabaseError("Could not create family", error);
-        return { error: `Could not create family. ${getSupabaseErrorMessage(error)}` };
-      }
-      if (!newFamily) {
-        console.warn("Could not create family: Supabase returned no family row.");
-        return { error: "Could not create family. Please try again." };
-      }
-      familyId = newFamily.id;
+    const loaded = await loadProfile(data.session);
+    if (!loaded) {
+      return {
+        error:
+          "Signed in, but no family profile was found. Create or join a family to finish setup.",
+      };
     }
 
-    const { data: newUser, error: userError } = await supabase
-      .from("family_users")
-      .insert({ family_id: familyId, name, role, emoji })
-      .select("id")
-      .single();
-
-    if (userError) {
-      warnHandledSupabaseError("Could not save family user", userError);
-      return { error: `Could not save your profile. ${getSupabaseErrorMessage(userError)}` };
-    }
-    if (!newUser) {
-      console.warn("Could not save family user: Supabase returned no user row.");
-      return { error: "Could not save your profile. Please try again." };
-    }
-
-    const authUser: AuthUser = { id: newUser.id, name, role, emoji, familyCode: code, familyId };
-    localStorage.setItem(AUTH_KEY, JSON.stringify(authUser));
-    setUser(authUser);
     return {};
   }
 
-  function logout() {
-    localStorage.removeItem(AUTH_KEY);
+  async function createAccount(
+    data: AccountSetupData,
+    role: UserRole,
+  ): Promise<{ error?: string }> {
+    setIsLoading(true);
+
+    const { data: existingSessionData } = await supabase.auth.getSession();
+    let activeSession = existingSessionData.session;
+
+    if (!activeSession) {
+      const { data: signUpData, error: signUpError } =
+        await supabase.auth.signUp({
+          email: data.email.trim(),
+          password: data.password,
+        });
+
+      if (signUpError) {
+        setIsLoading(false);
+        return {
+          error: `Could not create account. ${getSupabaseErrorMessage(signUpError)}`,
+        };
+      }
+
+      activeSession = signUpData.session;
+    }
+
+    if (!activeSession) {
+      setIsLoading(false);
+      return {
+        error:
+          "Account created, but email confirmation is enabled. Confirm your email, then sign in.",
+      };
+    }
+
+    const normalizedRoomCode = normalizeRoomCode(data.roomCode);
+    const rpcName =
+      role === "parent"
+        ? "create_family_for_current_user"
+        : "join_family_by_code";
+    const rpcArgs =
+      role === "parent"
+        ? {
+            p_room_code: normalizedRoomCode,
+            p_name: data.name.trim(),
+            p_emoji: data.emoji,
+          }
+        : {
+            p_room_code: normalizedRoomCode,
+            p_name: data.name.trim(),
+            p_role: role,
+            p_emoji: data.emoji,
+          };
+
+    const { data: profileRows, error: profileError } = await supabase.rpc(
+      rpcName,
+      rpcArgs,
+    );
+
+    if (profileError) {
+      warnHandledSupabaseError("Could not create account profile", profileError);
+      setUser(null);
+      setIsLoading(false);
+      return {
+        error: `Profile setup failed. ${getSupabaseErrorMessage(profileError)}`,
+      };
+    }
+
+    const profile = Array.isArray(profileRows)
+      ? (profileRows[0] as RpcProfileRow | undefined)
+      : (profileRows as RpcProfileRow | null);
+
+    if (!profile) {
+      setUser(null);
+      setIsLoading(false);
+      return { error: "Account created, but profile setup failed." };
+    }
+
+    setUser(toAuthUser(profile));
+    setIsLoading(false);
+    return {};
+  }
+
+  async function createParentAccount(data: AccountSetupData) {
+    return createAccount(data, "parent");
+  }
+
+  async function createChildAccount(data: AccountSetupData) {
+    return createAccount(data, "child");
+  }
+
+  async function logout() {
+    await supabase.auth.signOut();
     setUser(null);
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isLoading }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        signIn,
+        createParentAccount,
+        createChildAccount,
+        logout,
+        isLoading,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

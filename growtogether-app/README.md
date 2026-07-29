@@ -120,6 +120,17 @@ DeepSeek charges from your topped-up balance. To keep spending near $10/month, t
 
 To create families and save parent/child profiles, the Supabase database also needs the app tables and policies. In Supabase, open `SQL Editor`, paste the contents of `supabase-setup.sql`, and run it once for your project.
 
+The app now uses real Supabase email/password accounts. In Supabase:
+
+1. Open `Authentication` > `Providers`.
+2. Make sure `Email` is enabled.
+3. For this MVP, turn off `Confirm email` so a new parent or child can sign in immediately after account creation.
+4. Open `Authentication` > `URL Configuration` and set the site URL to your deployed app URL when you deploy.
+
+Parents create the family code when they create their account. Children create their own account and join with the parent-created family code. Use codes that are hard to guess, such as `SMITH-8K2Q`, not short test codes.
+
+If you deploy to Vercel, add the same Supabase environment variables in `Vercel Dashboard > Project > Settings > Environment Variables`, then redeploy.
+
 Important: do not commit `.env.local`. It contains private information and is already ignored by Git.
 
 ## 5. Run The App On Your Machine
