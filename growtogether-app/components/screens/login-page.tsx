@@ -6,10 +6,18 @@ import { useAuth, UserRole } from "@/components/providers/auth-context";
 const CHILD_AVATARS = ["Nova", "Pixel", "Rocket", "Skater", "Coder", "Artist"];
 const PARENT_AVATARS = ["Guide", "Coach", "Anchor", "Spark", "Helper", "Leaf"];
 
-type AuthMode = "sign-in" | "create";
+type AuthMode = "sign-in" | "create" | "forgot-password";
+
+const PASSWORD_RESET_CONFIRMATION =
+  "If an account exists for this email, we sent a password reset link.";
 
 export function LoginPage() {
-  const { signIn, createParentAccount, createChildAccount } = useAuth();
+  const {
+    signIn,
+    requestPasswordReset,
+    createParentAccount,
+    createChildAccount,
+  } = useAuth();
   const [mode, setMode] = useState<AuthMode>("sign-in");
   const [role, setRole] = useState<UserRole>("parent");
   const [email, setEmail] = useState("");
@@ -18,15 +26,18 @@ export function LoginPage() {
   const [roomCode, setRoomCode] = useState("");
   const [selectedAvatar, setSelectedAvatar] = useState(PARENT_AVATARS[0]);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const [loading, setLoading] = useState(false);
 
   const isCreateMode = mode === "create";
+  const isForgotPasswordMode = mode === "forgot-password";
   const isChild = role === "child";
   const avatars = isChild ? CHILD_AVATARS : PARENT_AVATARS;
 
   function switchMode(nextMode: AuthMode) {
     setMode(nextMode);
     setError("");
+    setNotice("");
   }
 
   function pickRole(nextRole: UserRole) {
@@ -38,9 +49,24 @@ export function LoginPage() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
+    setNotice("");
 
     if (!email.trim()) {
       setError("Please enter your email.");
+      return;
+    }
+
+    if (isForgotPasswordMode) {
+      setLoading(true);
+      const result = await requestPasswordReset(email);
+      setLoading(false);
+
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+
+      setNotice(PASSWORD_RESET_CONFIRMATION);
       return;
     }
 
@@ -148,6 +174,18 @@ export function LoginPage() {
           )}
 
           <form className="mt-6 space-y-5" onSubmit={handleSubmit}>
+            {isForgotPasswordMode && (
+              <div>
+                <h2 className="font-display text-2xl text-foreground">
+                  Reset your password
+                </h2>
+                <p className="mt-2 text-sm text-muted">
+                  Enter your email and we&apos;ll send instructions if it is
+                  connected to an account.
+                </p>
+              </div>
+            )}
+
             <label className="block">
               <span className="text-sm font-medium text-foreground">Email</span>
               <input
@@ -160,19 +198,31 @@ export function LoginPage() {
               />
             </label>
 
-            <label className="block">
-              <span className="text-sm font-medium text-foreground">
-                Password
-              </span>
-              <input
-                className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3"
-                type="password"
-                autoComplete={isCreateMode ? "new-password" : "current-password"}
-                placeholder="At least 6 characters"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-              />
-            </label>
+            {!isForgotPasswordMode && (
+              <label className="block">
+                <span className="text-sm font-medium text-foreground">
+                  Password
+                </span>
+                <input
+                  className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3"
+                  type="password"
+                  autoComplete={isCreateMode ? "new-password" : "current-password"}
+                  placeholder="At least 6 characters"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                />
+              </label>
+            )}
+
+            {mode === "sign-in" && (
+              <button
+                type="button"
+                onClick={() => switchMode("forgot-password")}
+                className="text-sm font-semibold text-accent transition hover:text-accent-strong"
+              >
+                Forgot your password?
+              </button>
+            )}
 
             {isCreateMode && (
               <>
@@ -237,21 +287,41 @@ export function LoginPage() {
               </p>
             )}
 
+            {notice && (
+              <p className="rounded-xl bg-secondary-soft p-3 text-sm text-foreground">
+                {notice}
+              </p>
+            )}
+
             <button
               type="submit"
               disabled={loading}
               className="w-full rounded-full bg-secondary py-4 font-bold text-white transition hover:bg-secondary/90 disabled:opacity-50"
             >
               {loading
-                ? isCreateMode
+                ? isForgotPasswordMode
+                  ? "Sending reset link..."
+                  : isCreateMode
                   ? "Creating account..."
                   : "Signing in..."
-                : isCreateMode
+                : isForgotPasswordMode
+                  ? "Send reset link"
+                  : isCreateMode
                   ? isChild
                     ? "Create child account"
                     : "Create parent account"
                   : "Sign in"}
             </button>
+
+            {isForgotPasswordMode && (
+              <button
+                type="button"
+                onClick={() => switchMode("sign-in")}
+                className="w-full text-sm font-semibold text-muted transition hover:text-foreground"
+              >
+                Back to sign in
+              </button>
+            )}
           </form>
         </div>
       </div>
