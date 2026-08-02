@@ -11,7 +11,7 @@ import { formatDate } from "@/lib/utils";
 
 export function MemoryPage() {
   const { state } = useAppState();
-  const { isNeonQuest } = useChildTheme();
+  const { isNeonQuest, isWoodland } = useChildTheme();
   const [weeklyHighlight, setWeeklyHighlight] = useState<string | null>(null);
   const [highlightLoading, setHighlightLoading] = useState(false);
 
@@ -46,14 +46,14 @@ export function MemoryPage() {
   if (historyEntries.length === 0) {
     return (
       <EmptyState
-        title={isNeonQuest ? "Replay vault is empty" : "Growth memory starts with the first journey"}
+        title={isNeonQuest ? "Replay vault is empty" : isWoodland ? "Your growth journal is ready" : "Growth memory starts with the first journey"}
         description={
           isNeonQuest
             ? "No clips yet. Launch a quest, post a mission log, and your highlights will land here."
             : "As soon as the child starts a goal and checks in, this page will begin telling the full story with progress, reflection, and family support."
         }
         ctaHref="/discover"
-        ctaLabel={isNeonQuest ? "Start a quest" : "Create the first journey"}
+        ctaLabel={isNeonQuest ? "Start a quest" : isWoodland ? "Begin exploring" : "Create the first journey"}
       />
     );
   }
@@ -62,10 +62,10 @@ export function MemoryPage() {
     <div className="space-y-5">
       <Panel>
         <p className="text-sm uppercase tracking-[0.25em] text-secondary">
-          {isNeonQuest ? "Replay Vault" : "Screen 5"}
+          {isNeonQuest ? "Replay Vault" : isWoodland ? "Growth Journal" : "Screen 5"}
         </p>
         <h2 className="mt-3 font-display text-4xl text-foreground">
-          {isNeonQuest ? "Your highlight reel has receipts." : "Growth memory"}
+          {isNeonQuest ? "Your highlight reel has receipts." : isWoodland ? "See how far you've grown." : "Growth memory"}
         </h2>
         <p className="mt-3 max-w-3xl text-muted">
           {isNeonQuest
@@ -82,7 +82,7 @@ export function MemoryPage() {
 
       <Panel>
         <p className="text-sm uppercase tracking-[0.25em] text-secondary">
-          {isNeonQuest ? "XP Graph" : "Progress graph"}
+          {isNeonQuest ? "XP Graph" : isWoodland ? "Growth over time" : "Progress graph"}
         </p>
         <h3 className="mt-2 text-2xl font-semibold text-foreground">
           {isNeonQuest ? "Momentum check. Are we cooking?" : "Snapshot of momentum over time"}
@@ -94,7 +94,7 @@ export function MemoryPage() {
 
       <Panel>
         <p className="text-sm uppercase tracking-[0.25em] text-secondary">
-          {isNeonQuest ? "Quest Timeline" : "Timeline"}
+          {isNeonQuest ? "Quest Timeline" : isWoodland ? "Trail of moments" : "Timeline"}
         </p>
         <div className="mt-6 space-y-4">
           {historyEntries.map((entry) => (

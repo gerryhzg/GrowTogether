@@ -96,3 +96,15 @@ Supabase reset/update methods in [auth-context.tsx (line 192)].
 New password and expired-link handling in [reset-password-page.tsx (line 11)].
 Signed-in “Change password” link in [app-shell.tsx (line 188)].
 Supabase redirect setup instructions in [README.md (line 129)].
+
+8-2-26
+Implemented the Woodland child theme.
+Highlights:
+Added persisted woodland theme and isWoodland context state.
+Replaced the toggle with an accessible three-option theme picker.
+Added responsive watercolor woodland artwork:[Desktop background]
+[Mobile background]
+
+Added woodland colors, organic panels, gentle leaves/water animation, and reduced-motion support in [globals.css (line 58)].
+Added grounded nature wording across Home, Discover, Check-In, Memory, badges, streaks, and next-step cards.
+Original, Neon Quest, parent screens, routes, and data behavior remain intact.
