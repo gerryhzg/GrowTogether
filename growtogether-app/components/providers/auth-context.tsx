@@ -25,6 +25,8 @@ export interface AuthUser {
 interface AuthContextValue {
   user: AuthUser | null;
   signIn: (email: string, password: string) => Promise<{ error?: string }>;
+  requestPasswordReset: (email: string) => Promise<{ error?: string }>;
+  updatePassword: (password: string) => Promise<{ error?: string }>;
   createParentAccount: (data: AccountSetupData) => Promise<{ error?: string }>;
   createChildAccount: (data: AccountSetupData) => Promise<{ error?: string }>;
   logout: () => Promise<void>;
@@ -187,6 +189,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return {};
   }
 
+  async function requestPasswordReset(email: string) {
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+
+    if (error) {
+      return {
+        error: `Could not send the password reset email. ${getSupabaseErrorMessage(error)}`,
+      };
+    }
+
+    return {};
+  }
+
+  async function updatePassword(password: string) {
+    const { error } = await supabase.auth.updateUser({ password });
+
+    if (error) {
+      return {
+        error: `Could not update your password. ${getSupabaseErrorMessage(error)}`,
+      };
+    }
+
+    return {};
+  }
+
   async function createAccount(
     data: AccountSetupData,
     role: UserRole,
@@ -287,6 +315,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         user,
         signIn,
+        requestPasswordReset,
+        updatePassword,
         createParentAccount,
         createChildAccount,
         logout,

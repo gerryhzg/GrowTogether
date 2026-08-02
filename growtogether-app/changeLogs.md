@@ -87,3 +87,12 @@ Verified:
 npx.cmd eslint components\providers\auth-context.tsx --quiet passed.
 npm.cmd run build passed.
 Now rerun the full updated supabase-setup.sql in Supabase SQL Editor.
+
+8-2-26
+Implemented secure password recovery and signed-in password changes.
+Key additions:
+Supabase reset/update methods in [auth-context.tsx (line 192)].
+“Forgot your password?” flow with privacy-preserving messaging in [login-page.tsx (line 223)].
+New password and expired-link handling in [reset-password-page.tsx (line 11)].
+Signed-in “Change password” link in [app-shell.tsx (line 188)].
+Supabase redirect setup instructions in [README.md (line 129)].

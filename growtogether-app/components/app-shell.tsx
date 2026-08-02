@@ -65,6 +65,10 @@ export function AppShell({ children }: { children: ReactNode }) {
     });
   }
 
+  if (pathname === "/reset-password") {
+    return <>{children}</>;
+  }
+
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -177,6 +181,12 @@ export function AppShell({ children }: { children: ReactNode }) {
                   Theme: {themeLabel}
                 </button>
               )}
+              <Link
+                href="/reset-password"
+                className="rounded-full border border-border bg-white/60 px-4 py-2 text-sm text-muted transition hover:text-foreground"
+              >
+                Change password
+              </Link>
               <button
                 onClick={logout}
                 className="rounded-full border border-border bg-white/60 px-4 py-2 text-sm text-muted transition hover:text-foreground"

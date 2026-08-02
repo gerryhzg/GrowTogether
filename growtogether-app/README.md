@@ -126,6 +126,14 @@ The app now uses real Supabase email/password accounts. In Supabase:
 2. Make sure `Email` is enabled.
 3. For this MVP, turn off `Confirm email` so a new parent or child can sign in immediately after account creation.
 4. Open `Authentication` > `URL Configuration` and set the site URL to your deployed app URL when you deploy.
+5. In the same URL configuration, add password recovery redirect URLs for every environment you use:
+
+```text
+http://localhost:3000/reset-password
+https://your-deployed-domain.com/reset-password
+```
+
+Replace the deployed-domain example with your real app URL. Supabase must allow this redirect for emailed password reset links to return users to the new-password screen.
 
 Parents create the family code when they create their account. Children create their own account and join with the parent-created family code. Use codes that are hard to guess, such as `SMITH-8K2Q`, not short test codes.
 
