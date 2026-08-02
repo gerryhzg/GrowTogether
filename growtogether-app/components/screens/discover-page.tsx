@@ -11,7 +11,7 @@ import { GoalSuggestion, GoalSuggestionResponse, InterestName } from "@/lib/type
 
 export function DiscoverPage() {
   const { user } = useAuth();
-  const { isNeonQuest } = useChildTheme();
+  const { isNeonQuest, isWoodland } = useChildTheme();
   const { interests, saveInterests } = useInterests(user?.familyId);
   const { journey, createJourney } = useJourney(user?.familyId);
 
@@ -123,14 +123,18 @@ export function DiscoverPage() {
           {isChild
             ? isNeonQuest
               ? "Stat Builder"
-              : "What do you love?"
+              : isWoodland
+                ? "Find what helps you grow"
+                : "What do you love?"
             : "Screen 2"}
         </p>
         <h2 className="mt-3 font-display text-4xl text-foreground">
           {isChild
             ? isNeonQuest
               ? "Build your loadout. Make it loud."
-              : "Rate what makes you excited!"
+              : isWoodland
+                ? "Explore what makes you curious."
+                : "Rate what makes you excited!"
             : "Discover what the child loves most."}
         </h2>
         <p className="mt-3 max-w-2xl text-muted">
@@ -172,13 +176,15 @@ export function DiscoverPage() {
 
       <Panel>
         <p className="text-sm uppercase tracking-[0.25em] text-secondary">
-          {isNeonQuest ? "Quest Drops" : "Suggested goals"}
+          {isNeonQuest ? "Quest Drops" : isWoodland ? "Paths you could try" : "Suggested goals"}
         </p>
         <h3 className="mt-2 text-2xl font-semibold text-foreground">
           {isChild
             ? isNeonQuest
               ? "Pick the mission with main-character energy."
-              : "Your perfect goals!"
+              : isWoodland
+                ? "Choose a goal that feels right."
+                : "Your perfect goals!"
             : "Goals grounded in real interests"}
         </h3>
         {isChild && journey && (

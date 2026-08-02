@@ -33,7 +33,7 @@ interface ConfettiPiece {
 }
 
 export function BadgesSection({ badges }: BadgesSectionProps) {
-  const { isNeonQuest } = useChildTheme();
+  const { isNeonQuest, isWoodland } = useChildTheme();
   const [celebrating, setCelebrating] = useState<string | null>(null);
   const [confetti, setConfetti] = useState<ConfettiPiece[]>([]);
   const unlockedBadges = badges.filter((b) => b.unlockedAt !== null);
@@ -82,7 +82,7 @@ export function BadgesSection({ badges }: BadgesSectionProps) {
       ))}
 
       <div className="rounded-[2rem] bg-white/80 p-6 shadow-sm">
-        <p className="text-sm uppercase tracking-[0.25em] text-secondary">{isNeonQuest ? "Flex Badges" : "Achievement Badges"}</p>
+        <p className="text-sm uppercase tracking-[0.25em] text-secondary">{isNeonQuest ? "Flex Badges" : isWoodland ? "Growth Markers" : "Achievement Badges"}</p>
         <h3 className="mt-2 text-2xl font-semibold text-foreground">
           {unlockedBadges.length}/{badges.length} {isNeonQuest ? "unlocked. W energy." : "unlocked"}
         </h3>

@@ -15,15 +15,16 @@ type NavItem = {
   icon: string;
   label: string;
   neonLabel?: string;
+  woodlandLabel?: string;
 };
 
 const CHILD_THEME_STORAGE_KEY = "growtogether-child-theme";
 
 const childNavItems: NavItem[] = [
-  { href: "/", icon: "Home", label: "Home", neonLabel: "Base" },
-  { href: "/discover", icon: "Search", label: "Discover", neonLabel: "Quest Lab" },
-  { href: "/check-in", icon: "Check", label: "Check-In", neonLabel: "Mission Log" },
-  { href: "/memory", icon: "Book", label: "Memory", neonLabel: "Replay" },
+  { href: "/", icon: "Home", label: "Home", neonLabel: "Base", woodlandLabel: "Home Trail" },
+  { href: "/discover", icon: "Search", label: "Discover", neonLabel: "Quest Lab", woodlandLabel: "Explore" },
+  { href: "/check-in", icon: "Check", label: "Check-In", neonLabel: "Mission Log", woodlandLabel: "Check-In" },
+  { href: "/memory", icon: "Book", label: "Memory", neonLabel: "Replay", woodlandLabel: "Growth Journal" },
 ];
 
 const parentNavItems: NavItem[] = [
@@ -34,7 +35,7 @@ const parentNavItems: NavItem[] = [
 ];
 
 function isChildTheme(value: string | null): value is ChildTheme {
-  return value === "original" || value === "neon-quest";
+  return value === "original" || value === "neon-quest" || value === "woodland";
 }
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -57,12 +58,10 @@ export function AppShell({ children }: { children: ReactNode }) {
     });
   }, [isChild]);
 
-  function toggleChildTheme() {
-    setChildTheme((currentTheme) => {
-      const nextTheme = currentTheme === "original" ? "neon-quest" : "original";
-      window.localStorage.setItem(CHILD_THEME_STORAGE_KEY, nextTheme);
-      return nextTheme;
-    });
+  function updateChildTheme(nextTheme: string) {
+    if (!isChildTheme(nextTheme)) return;
+    setChildTheme(nextTheme);
+    window.localStorage.setItem(CHILD_THEME_STORAGE_KEY, nextTheme);
   }
 
   if (pathname === "/reset-password") {
@@ -82,7 +81,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   }
 
   const navItems = isChild ? childNavItems : parentNavItems;
-  const themeLabel = childTheme === "original" ? "Original" : "Neon Quest";
+  const isWoodland = childTheme === "woodland";
 
   if (isChild && pathname === "/parent") {
     return (
@@ -92,11 +91,13 @@ export function AppShell({ children }: { children: ReactNode }) {
         className="flex min-h-screen items-center justify-center px-4"
       >
         <div className="text-center">
-          <div className="text-6xl">Lock</div>
+          <div className="text-6xl" aria-hidden="true">Lock</div>
           <h2 className="mt-4 text-2xl font-bold text-foreground">
-            Parent zone is locked, bestie
+            {isWoodland ? "Parent space is just beyond this trail" : "Parent zone is locked, bestie"}
           </h2>
-          <p className="mt-2 text-muted">Back to base. Your quests are waiting.</p>
+          <p className="mt-2 text-muted">
+            {isWoodland ? "Head back to your home trail to keep growing." : "Back to base. Your quests are waiting."}
+          </p>
           <Link
             href="/"
             className="mt-6 inline-block rounded-full bg-accent px-6 py-3 font-semibold text-white"
@@ -139,19 +140,31 @@ export function AppShell({ children }: { children: ReactNode }) {
       data-child-theme={isChild ? childTheme : undefined}
       className="app-shell min-h-screen px-4 py-6 text-foreground sm:px-6 lg:px-8"
     >
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
+      {isChild && isWoodland && (
+        <div className="woodland-ambience" aria-hidden="true">
+          <span className="woodland-leaf woodland-leaf-one" />
+          <span className="woodland-leaf woodland-leaf-two" />
+          <span className="woodland-leaf woodland-leaf-three" />
+          <span className="woodland-water-shimmer" />
+        </div>
+      )}
+      <div className="app-content mx-auto flex w-full max-w-7xl flex-col gap-6">
         <header className="glass-panel warm-ring relative overflow-hidden rounded-[2rem] px-6 py-5 sm:px-8">
           <div className="relative flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <p className="text-sm font-medium uppercase tracking-[0.25em] text-secondary">
                 {isChild && childTheme === "neon-quest"
                   ? "GrowTogether HQ"
-                  : "GrowTogether"}
+                  : isChild && isWoodland
+                    ? "GrowTogether Woodland"
+                    : "GrowTogether"}
               </p>
               <h1 className="mt-2 font-display text-3xl leading-tight text-foreground sm:text-4xl">
                 {isChild
                   ? childTheme === "neon-quest"
                     ? `${user.name}, lock in. The mission board is live.`
+                    : isWoodland
+                      ? `Welcome to the woods, ${user.name}.`
                     : `Hey ${user.name}! Ready to grow?`
                   : `Welcome back, ${user.name} ${user.emoji}`}
               </h1>
@@ -159,6 +172,8 @@ export function AppShell({ children }: { children: ReactNode }) {
                 {isChild
                   ? childTheme === "neon-quest"
                     ? "Stack XP, catch Ws, and keep the streak spicy. No cap."
+                    : isWoodland
+                      ? "Small steps grow into something wonderful."
                     : "You are doing amazing. Keep going."
                   : "Supporting your child's growth journey."}
               </p>
@@ -173,13 +188,19 @@ export function AppShell({ children }: { children: ReactNode }) {
                 </p>
               </div>
               {isChild && (
-                <button
-                  type="button"
-                  onClick={toggleChildTheme}
-                  className="theme-toggle rounded-full border border-border bg-white/60 px-4 py-2 text-sm font-semibold text-foreground transition hover:border-accent hover:text-accent"
-                >
-                  Theme: {themeLabel}
-                </button>
+                <label className="theme-picker">
+                  <span className="sr-only">Child interface theme</span>
+                  <select
+                    aria-label="Child interface theme"
+                    value={childTheme}
+                    onChange={(event) => updateChildTheme(event.target.value)}
+                    className="theme-toggle rounded-full border border-border bg-white/60 px-4 py-2 text-sm font-semibold text-foreground transition hover:border-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                  >
+                    <option value="original">Original</option>
+                    <option value="neon-quest">Neon Quest</option>
+                    <option value="woodland">Woodland</option>
+                  </select>
+                </label>
               )}
               <Link
                 href="/reset-password"
@@ -203,6 +224,8 @@ export function AppShell({ children }: { children: ReactNode }) {
             const label =
               isChild && childTheme === "neon-quest" && item.neonLabel
                 ? item.neonLabel
+                : isChild && isWoodland && item.woodlandLabel
+                  ? item.woodlandLabel
                 : item.label;
 
             return (
@@ -231,6 +254,8 @@ export function AppShell({ children }: { children: ReactNode }) {
             const label =
               isChild && childTheme === "neon-quest" && item.neonLabel
                 ? item.neonLabel
+                : isChild && isWoodland && item.woodlandLabel
+                  ? item.woodlandLabel
                 : item.label;
 
             return (

@@ -9,11 +9,11 @@ interface StreakCardProps {
 }
 
 export function StreakCard({ streakInfo }: StreakCardProps) {
-  const { isNeonQuest } = useChildTheme();
+  const { isNeonQuest, isWoodland } = useChildTheme();
 
   return (
     <div className="rounded-[1.5rem] bg-white/75 p-5 shadow-sm">
-      <p className="text-xs uppercase tracking-[0.25em] text-muted">{isNeonQuest ? "Streak Meter" : "Consistency Tracker"}</p>
+      <p className="text-xs uppercase tracking-[0.25em] text-muted">{isNeonQuest ? "Streak Meter" : isWoodland ? "Steady Growth" : "Consistency Tracker"}</p>
       
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         <div>
