@@ -9,7 +9,7 @@ import { EmptyState } from "@/components/empty-state";
 
 export function CheckInPage() {
   const { user } = useAuth();
-  const { isNeonQuest, isWoodland } = useChildTheme();
+  const { isNeonQuest, isWoodland, isFarm } = useChildTheme();
   const { journey } = useJourney(user?.familyId);
   const { saveCheckIn } = useCheckIns(user?.familyId, journey?.id);
   const [progressAdded, setProgressAdded] = useState(1);
@@ -23,14 +23,14 @@ export function CheckInPage() {
   if (!journey) {
     return (
       <EmptyState
-        title={isWoodland ? "Choose a trail to begin" : "A journey comes first"}
+        title={isWoodland ? "Choose a trail to begin" : isFarm ? "No chore in the feed bucket yet" : "A journey comes first"}
         description={
           isNeonQuest
             ? "No quest loaded. Hit Quest Lab first so you have something worth grinding."
             : "Create a goal from the child's interests first, then come back here for daily progress and reflection."
         }
         ctaHref="/discover"
-        ctaLabel={isNeonQuest ? "Open Quest Lab" : isWoodland ? "Explore goals" : "Create a journey"}
+        ctaLabel={isNeonQuest ? "Open Quest Lab" : isWoodland ? "Explore goals" : isFarm ? "Pick a chore" : "Create a journey"}
       />
     );
   }
@@ -140,10 +140,10 @@ export function CheckInPage() {
     <div className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
       <Panel>
         <p className="text-sm uppercase tracking-[0.25em] text-secondary">
-          {isNeonQuest ? "Mission Log" : isWoodland ? "Trail Check-In" : "Daily Check-In"}
+          {isNeonQuest ? "Mission Log" : isWoodland ? "Trail Check-In" : isFarm ? "Chore Check" : "Daily Check-In"}
         </p>
         <h2 className="mt-3 font-display text-4xl text-foreground">
-          {isNeonQuest ? "Drop the XP. What went down?" : isWoodland ? "How did you grow today?" : "How did it go today?"}
+          {isNeonQuest ? "Drop the XP. What went down?" : isWoodland ? "How did you grow today?" : isFarm ? "How'd you fare today, little foal?" : "How did it go today?"}
         </h2>
         <p className="mt-3 text-muted">
           {isNeonQuest
@@ -166,7 +166,7 @@ export function CheckInPage() {
 
         <div className="mt-6 rounded-[1.5rem] bg-white/75 p-5 shadow-sm">
           <p className="text-xs uppercase tracking-[0.25em] text-muted">
-            {isNeonQuest ? "Current Quest" : isWoodland ? "What you're growing" : "Current goal"}
+            {isNeonQuest ? "Current Quest" : isWoodland ? "What you're growing" : isFarm ? "Today's chore" : "Current goal"}
           </p>
           <h3 className="mt-2 text-2xl font-semibold text-foreground">
             {activeJourney.goal_title}
@@ -238,10 +238,10 @@ export function CheckInPage() {
 
       <Panel>
         <p className="text-sm uppercase tracking-[0.25em] text-secondary">
-          {isNeonQuest ? "Debrief Zone" : isWoodland ? "Quiet Clearing" : "Reflection"}
+          {isNeonQuest ? "Debrief Zone" : isWoodland ? "Quiet Clearing" : isFarm ? "By the Fence" : "Reflection"}
         </p>
         <h3 className="mt-2 text-2xl font-semibold text-foreground">
-          {isNeonQuest ? "Be real. How was the run?" : "How did it feel?"}
+          {isNeonQuest ? "Be real. How was the run?" : isFarm ? "Tell me true, how did the work feel?" : "How did it feel?"}
         </h3>
         <label className="mt-6 block">
           <span className="text-sm font-medium text-foreground">

@@ -9,12 +9,12 @@ interface NextStepCardProps {
 }
 
 export function NextStepCard({ step, loading = false, onLoadStep }: NextStepCardProps) {
-  const { isNeonQuest, isWoodland } = useChildTheme();
+  const { isNeonQuest, isWoodland, isFarm } = useChildTheme();
 
   if (!step) {
     return (
       <div className="rounded-[1.5rem] bg-gradient-to-br from-green-50 to-green-25 p-6 shadow-sm border border-green-100">
-        <p className="text-sm uppercase tracking-[0.25em] text-green-600">{isNeonQuest ? "Next Move" : isWoodland ? "Next Step on the Trail" : "Next Best Step"}</p>
+        <p className="text-sm uppercase tracking-[0.25em] text-green-600">{isNeonQuest ? "Next Move" : isWoodland ? "Next Step on the Trail" : isFarm ? "Next Chore" : "Next Best Step"}</p>
         <button
           onClick={onLoadStep}
           disabled={loading}
@@ -28,7 +28,7 @@ export function NextStepCard({ step, loading = false, onLoadStep }: NextStepCard
 
   return (
     <div className="rounded-[1.5rem] bg-gradient-to-br from-green-50 to-green-25 p-6 shadow-sm border border-green-100">
-      <p className="text-sm uppercase tracking-[0.25em] text-green-600">{isNeonQuest ? "Next Move" : isWoodland ? "Next Step on the Trail" : "Next Best Step"}</p>
+      <p className="text-sm uppercase tracking-[0.25em] text-green-600">{isNeonQuest ? "Next Move" : isWoodland ? "Next Step on the Trail" : isFarm ? "Next Chore" : "Next Best Step"}</p>
       <h3 className="mt-3 text-xl font-semibold text-foreground">
         {step}
       </h3>
