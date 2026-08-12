@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { fallbackReflectionQuestion } from "@/lib/ai/fallbacks";
-import { generateReflectionWithAI } from "@/lib/ai/openai";
+import { generateReflectionWithAI } from "@/lib/ai/deepseek";
 import { ReflectionRequest, ReflectionResponse } from "@/lib/types";
 
 export async function POST(request: Request) {

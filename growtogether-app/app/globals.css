@@ -14,6 +14,80 @@
   --secondary-soft: #d8ebe4;
   --sun: #f3bf62;
   --shadow: 0 20px 60px rgba(70, 43, 27, 0.12);
+  --app-background:
+    linear-gradient(135deg, #fff8ef 0%, #f4efe3 48%, #efe4d1 100%);
+  --mobile-nav-background: rgba(255, 248, 239, 0.95);
+}
+
+/* Child theme - fun and cute */
+[data-role="child"] {
+  --background: #fff0f8;
+  --foreground: #2d1b4e;
+  --surface: rgba(255, 240, 255, 0.85);
+  --surface-strong: #fff5ff;
+  --accent: #ff6bb5;
+  --accent-strong: #e0408f;
+  --accent-soft: #ffd6ee;
+  --secondary: #7c3aed;
+  --secondary-soft: #ede9fe;
+  --sun: #fbbf24;
+  --app-background: linear-gradient(135deg, #fff0f8 0%, #f0e6ff 100%);
+  --mobile-nav-background: rgba(255, 240, 255, 0.95);
+}
+
+/* Child theme - Neon Quest game HUD */
+[data-role="child"][data-child-theme="neon-quest"] {
+  --background: #07111f;
+  --foreground: #e6fbff;
+  --surface: rgba(9, 22, 42, 0.88);
+  --surface-strong: #0d1c33;
+  --muted: #9fb5c8;
+  --border: rgba(86, 241, 255, 0.28);
+  --accent: #18e0ff;
+  --accent-strong: #00a8d6;
+  --accent-soft: rgba(24, 224, 255, 0.16);
+  --secondary: #b8ff3d;
+  --secondary-soft: rgba(184, 255, 61, 0.16);
+  --sun: #ff3df2;
+  --shadow: 0 22px 60px rgba(0, 0, 0, 0.34);
+  --app-background:
+    linear-gradient(135deg, #050914 0%, #07111f 42%, #150c2d 100%);
+  --mobile-nav-background: rgba(5, 9, 20, 0.94);
+}
+
+/* Child theme - watercolor woodland */
+[data-role="child"][data-child-theme="woodland"] {
+  --background: #e9f0dc;
+  --foreground: #23382b;
+  --surface: rgba(255, 253, 242, 0.9);
+  --surface-strong: #fffdf4;
+  --muted: #526357;
+  --border: rgba(55, 89, 64, 0.22);
+  --accent: #4f7d54;
+  --accent-strong: #315f3c;
+  --accent-soft: #dcebcf;
+  --secondary: #3f7780;
+  --secondary-soft: #d8ebea;
+  --sun: #d9ad55;
+  --shadow: 0 20px 55px rgba(45, 72, 49, 0.16);
+  --app-background: #e9f0dc;
+  --mobile-nav-background: rgba(250, 250, 236, 0.96);
+}
+
+/* Parent theme - clean and mature */
+[data-role="parent"] {
+  --background: #f0f4f8;
+  --foreground: #1a202c;
+  --surface: rgba(240, 244, 248, 0.85);
+  --surface-strong: #ffffff;
+  --accent: #2d6a4f;
+  --accent-strong: #1b4332;
+  --accent-soft: #b7e4c7;
+  --secondary: #2c5282;
+  --secondary-soft: #bee3f8;
+  --sun: #f6ad55;
+  --app-background: linear-gradient(135deg, #f0f4f8 0%, #e8f4f0 100%);
+  --mobile-nav-background: rgba(240, 244, 248, 0.95);
 }
 
 @theme inline {
@@ -33,9 +107,7 @@
   --font-display: Georgia, "Times New Roman", serif;
 }
 
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 html {
   background:
@@ -49,23 +121,24 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans), sans-serif;
   min-height: 100vh;
+  transition: background 0.3s ease;
 }
 
-a {
-  color: inherit;
-  text-decoration: none;
+.app-shell {
+  background: var(--app-background);
+  transition: background 0.25s ease, color 0.25s ease;
 }
 
-button,
-input,
-textarea,
-select {
-  font: inherit;
+.app-content {
+  position: relative;
+  z-index: 1;
 }
 
-::selection {
-  background: rgba(238, 122, 82, 0.2);
-}
+a { color: inherit; text-decoration: none; }
+
+button, input, textarea, select { font: inherit; }
+
+::selection { background: rgba(238, 122, 82, 0.2); }
 
 .glass-panel {
   background: var(--surface);
@@ -74,8 +147,270 @@ select {
   box-shadow: var(--shadow);
 }
 
+.mobile-nav {
+  background: var(--mobile-nav-background);
+}
+
+.family-code-card {
+  background: color-mix(in srgb, var(--surface-strong) 78%, white 22%);
+}
+
 .warm-ring {
   box-shadow:
     0 0 0 1px rgba(255, 255, 255, 0.5),
     0 18px 40px rgba(94, 65, 28, 0.12);
+}
+
+/* Confetti rectangles */
+@keyframes confetti-fall {
+  0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(120px) rotate(720deg); opacity: 0; }
+}
+
+.confetti-piece {
+  animation: confetti-fall 1.2s ease-in forwards;
+}
+
+/* Child page fun fonts */
+[data-role="child"] h1,
+[data-role="child"] h2,
+[data-role="child"] h3 {
+  letter-spacing: -0.01em;
+}
+
+/* Floating stars for child */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+.float-emoji {
+  animation: float 3s ease-in-out infinite;
+  display: inline-block;
+}
+
+[data-role="child"][data-child-theme="neon-quest"] .glass-panel {
+  border-radius: 12px;
+  box-shadow:
+    0 0 0 1px rgba(24, 224, 255, 0.08),
+    0 18px 55px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+[data-role="child"][data-child-theme="neon-quest"] .warm-ring {
+  box-shadow:
+    0 0 0 1px rgba(24, 224, 255, 0.3),
+    0 0 30px rgba(24, 224, 255, 0.12),
+    0 24px 70px rgba(0, 0, 0, 0.4);
+}
+
+[data-role="child"][data-child-theme="neon-quest"] h1,
+[data-role="child"][data-child-theme="neon-quest"] h2,
+[data-role="child"][data-child-theme="neon-quest"] h3 {
+  font-family: var(--font-sans), sans-serif;
+  letter-spacing: 0;
+}
+
+[data-role="child"][data-child-theme="neon-quest"] button,
+[data-role="child"][data-child-theme="neon-quest"] input,
+[data-role="child"][data-child-theme="neon-quest"] textarea,
+[data-role="child"][data-child-theme="neon-quest"] select {
+  border-radius: 8px;
+}
+
+[data-role="child"][data-child-theme="neon-quest"] input,
+[data-role="child"][data-child-theme="neon-quest"] textarea,
+[data-role="child"][data-child-theme="neon-quest"] select {
+  background: rgba(3, 10, 24, 0.76);
+  color: var(--foreground);
+  border-color: var(--border);
+}
+
+[data-role="child"][data-child-theme="neon-quest"] input[type="range"] {
+  accent-color: var(--secondary);
+}
+
+[data-role="child"][data-child-theme="neon-quest"] .theme-toggle {
+  background: rgba(24, 224, 255, 0.12);
+  border-color: rgba(24, 224, 255, 0.45);
+  color: var(--foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+[data-role="child"][data-child-theme="neon-quest"] .family-code-card {
+  background: rgba(184, 255, 61, 0.12);
+  border: 1px solid rgba(184, 255, 61, 0.32);
+}
+
+[data-role="child"][data-child-theme="neon-quest"] a.bg-accent,
+[data-role="child"][data-child-theme="neon-quest"] button.bg-accent,
+[data-role="child"][data-child-theme="neon-quest"] .bg-accent {
+  color: #03111a;
+  box-shadow: 0 0 24px rgba(24, 224, 255, 0.24);
+}
+
+[data-role="child"][data-child-theme="neon-quest"] .bg-white\/60,
+[data-role="child"][data-child-theme="neon-quest"] .bg-white\/70,
+[data-role="child"][data-child-theme="neon-quest"] .bg-white\/75,
+[data-role="child"][data-child-theme="neon-quest"] .bg-white\/80 {
+  background: rgba(11, 27, 49, 0.78);
+}
+
+[data-role="child"][data-child-theme="neon-quest"] .bg-gray-100 {
+  background: rgba(159, 181, 200, 0.18);
+}
+
+[data-role="child"][data-child-theme="neon-quest"] .mobile-nav {
+  border-color: rgba(24, 224, 255, 0.28);
+  box-shadow: 0 -16px 40px rgba(0, 0, 0, 0.34);
+}
+
+[data-role="child"][data-child-theme="woodland"].app-shell {
+  position: relative;
+  isolation: isolate;
+  background-color: var(--background);
+  background-image:
+    linear-gradient(rgba(247, 249, 231, 0.2), rgba(232, 241, 217, 0.32)),
+    url("/woodland/woodland-desktop.webp");
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-attachment: fixed;
+}
+
+[data-role="child"][data-child-theme="woodland"] .glass-panel {
+  border-color: rgba(62, 100, 68, 0.22);
+  border-radius: 2.1rem 1.6rem 2.25rem 1.75rem;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 246, 0.6),
+    0 18px 45px rgba(45, 72, 49, 0.15);
+}
+
+[data-role="child"][data-child-theme="woodland"] .warm-ring {
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 246, 0.75),
+    0 22px 55px rgba(45, 72, 49, 0.18);
+}
+
+[data-role="child"][data-child-theme="woodland"] h1,
+[data-role="child"][data-child-theme="woodland"] h2,
+[data-role="child"][data-child-theme="woodland"] h3 {
+  color: #294834;
+}
+
+[data-role="child"][data-child-theme="woodland"] input,
+[data-role="child"][data-child-theme="woodland"] textarea,
+[data-role="child"][data-child-theme="woodland"] select {
+  background-color: rgba(255, 254, 245, 0.94);
+  border-color: rgba(67, 102, 72, 0.28);
+  color: var(--foreground);
+}
+
+[data-role="child"][data-child-theme="woodland"] input[type="range"] {
+  accent-color: var(--accent);
+}
+
+[data-role="child"][data-child-theme="woodland"] .theme-toggle {
+  min-width: 8.75rem;
+  cursor: pointer;
+  background-color: rgba(255, 253, 240, 0.92);
+}
+
+[data-role="child"][data-child-theme="woodland"] .family-code-card {
+  border: 1px solid rgba(63, 119, 128, 0.2);
+  background: rgba(240, 247, 226, 0.92);
+}
+
+[data-role="child"][data-child-theme="woodland"] .bg-white\/60,
+[data-role="child"][data-child-theme="woodland"] .bg-white\/70,
+[data-role="child"][data-child-theme="woodland"] .bg-white\/75,
+[data-role="child"][data-child-theme="woodland"] .bg-white\/80,
+[data-role="child"][data-child-theme="woodland"] .bg-white {
+  background-color: rgba(255, 254, 245, 0.9);
+}
+
+[data-role="child"][data-child-theme="woodland"] .bg-gray-100 {
+  background-color: rgba(98, 122, 91, 0.16);
+}
+
+[data-role="child"][data-child-theme="woodland"] .mobile-nav {
+  border-color: rgba(57, 94, 63, 0.24);
+  box-shadow: 0 -12px 30px rgba(45, 72, 49, 0.13);
+}
+
+.woodland-ambience {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.woodland-leaf {
+  position: absolute;
+  display: block;
+  width: 14px;
+  height: 8px;
+  border-radius: 90% 10% 80% 20%;
+  background: rgba(91, 128, 62, 0.46);
+  filter: blur(0.2px);
+  animation: woodland-leaf-drift 13s linear infinite;
+}
+
+.woodland-leaf-one { left: 12%; animation-delay: -2s; }
+.woodland-leaf-two { left: 67%; width: 10px; height: 6px; animation-delay: -8s; animation-duration: 16s; }
+.woodland-leaf-three { left: 88%; animation-delay: -5s; animation-duration: 18s; }
+
+.woodland-water-shimmer {
+  position: absolute;
+  right: 4%;
+  bottom: 3%;
+  width: min(28rem, 38vw);
+  height: 5rem;
+  border-radius: 50%;
+  opacity: 0.28;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent 0 9px,
+    rgba(230, 251, 246, 0.85) 10px 12px,
+    transparent 13px 19px
+  );
+  animation: woodland-water-shimmer 5s ease-in-out infinite;
+}
+
+@keyframes woodland-leaf-drift {
+  0% { transform: translate3d(0, -5vh, 0) rotate(0deg); opacity: 0; }
+  12% { opacity: 0.7; }
+  88% { opacity: 0.5; }
+  100% { transform: translate3d(8vw, 105vh, 0) rotate(480deg); opacity: 0; }
+}
+
+@keyframes woodland-water-shimmer {
+  0%, 100% { transform: translateX(-5px) scaleX(0.98); opacity: 0.2; }
+  50% { transform: translateX(7px) scaleX(1.03); opacity: 0.36; }
+}
+
+@media (max-width: 639px) {
+  [data-role="child"][data-child-theme="woodland"].app-shell {
+    background-image:
+      linear-gradient(rgba(250, 250, 235, 0.12), rgba(229, 239, 211, 0.28)),
+      url("/woodland/woodland-mobile.webp");
+    background-attachment: scroll;
+    background-position: center top;
+  }
+
+  .woodland-water-shimmer {
+    right: -12%;
+    width: 70vw;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .woodland-leaf,
+  .woodland-water-shimmer,
+  .float-emoji,
+  .confetti-piece {
+    animation: none !important;
+  }
 }

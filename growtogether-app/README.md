@@ -94,15 +94,50 @@ This creates a `node_modules` folder. That folder is not pushed to GitHub.
 
 Create a file named `.env.local` in the `growtogether-app` folder.
 
-Add this line:
+You can copy `.env.example` as a starting point. Add these lines:
 
 ```env
-OPENAI_API_KEY=your_key_here
+DEEPSEEK_API_KEY=your_deepseek_key_here
+DEEPSEEK_MODEL=deepseek-v4-flash
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
-Replace `your_key_here` with your real OpenAI API key.
+Replace `your_deepseek_key_here` with your real DeepSeek API key.
+Replace the Supabase values with your project URL and anon key from Supabase `Project Settings > API`.
 
 If you do not have an API key yet, the app can still run. Some AI features will use built-in fallback suggestions.
+
+To get a DeepSeek API key:
+
+1. Go to [DeepSeek Platform](https://platform.deepseek.com/).
+2. Sign in or create an account.
+3. Open `API keys`.
+4. Create a new key.
+5. Put the key in `.env.local` as `DEEPSEEK_API_KEY=your_key_here`.
+
+DeepSeek charges from your topped-up balance. To keep spending near $10/month, top up only $10 at a time and check the usage/billing page regularly. If DeepSeek adds a hard monthly budget control in your account, set that budget to `$10`; otherwise, a $10 balance is the practical cap.
+
+To create families and save parent/child profiles, the Supabase database also needs the app tables and policies. In Supabase, open `SQL Editor`, paste the contents of `supabase-setup.sql`, and run it once for your project.
+
+The app now uses real Supabase email/password accounts. In Supabase:
+
+1. Open `Authentication` > `Providers`.
+2. Make sure `Email` is enabled.
+3. For this MVP, turn off `Confirm email` so a new parent or child can sign in immediately after account creation.
+4. Open `Authentication` > `URL Configuration` and set the site URL to your deployed app URL when you deploy.
+5. In the same URL configuration, add password recovery redirect URLs for every environment you use:
+
+```text
+http://localhost:3000/reset-password
+https://your-deployed-domain.com/reset-password
+```
+
+Replace the deployed-domain example with your real app URL. Supabase must allow this redirect for emailed password reset links to return users to the new-password screen.
+
+Parents create the family code when they create their account. Children create their own account and join with the parent-created family code. Use codes that are hard to guess, such as `SMITH-8K2Q`, not short test codes.
+
+If you deploy to Vercel, add the same Supabase environment variables in `Vercel Dashboard > Project > Settings > Environment Variables`, then redeploy.
 
 Important: do not commit `.env.local`. It contains private information and is already ignored by Git.
 

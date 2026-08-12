@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { fallbackParentSupport } from "@/lib/ai/fallbacks";
-import { generateParentSupportWithAI } from "@/lib/ai/openai";
+import { generateParentSupportWithAI } from "@/lib/ai/deepseek";
 import { ParentSupportRequest, ParentSupportResponse } from "@/lib/types";
 
 export async function POST(request: Request) {
