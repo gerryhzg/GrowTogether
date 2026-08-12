@@ -20,10 +20,14 @@ type NavItem = {
 
 const CHILD_THEME_STORAGE_KEY = "growtogether-child-theme";
 
+/** Dispatched by the reward room when a child equips an unlocked theme. */
+const CHILD_THEME_EVENT = "growtogether:child-theme";
+
 const childNavItems: NavItem[] = [
   { href: "/", icon: "Home", label: "Home", neonLabel: "Base", woodlandLabel: "Home Trail" },
   { href: "/discover", icon: "Search", label: "Discover", neonLabel: "Quest Lab", woodlandLabel: "Explore" },
   { href: "/check-in", icon: "Check", label: "Check-In", neonLabel: "Mission Log", woodlandLabel: "Check-In" },
+  { href: "/quest", icon: "Star", label: "Rewards", neonLabel: "Loadout", woodlandLabel: "Collection" },
   { href: "/memory", icon: "Book", label: "Memory", neonLabel: "Replay", woodlandLabel: "Growth Journal" },
 ];
 
@@ -56,6 +60,17 @@ export function AppShell({ children }: { children: ReactNode }) {
         setChildTheme(storedTheme);
       }
     });
+
+    // The reward room can equip an unlocked theme; repaint without a reload.
+    function handleThemeEvent(event: Event) {
+      const nextTheme = (event as CustomEvent<string>).detail;
+      if (isChildTheme(nextTheme)) {
+        setChildTheme(nextTheme);
+      }
+    }
+
+    window.addEventListener(CHILD_THEME_EVENT, handleThemeEvent);
+    return () => window.removeEventListener(CHILD_THEME_EVENT, handleThemeEvent);
   }, [isChild]);
 
   function updateChildTheme(nextTheme: string) {
