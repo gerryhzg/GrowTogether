@@ -108,3 +108,21 @@ Added responsive watercolor woodland artwork:[Desktop background]
 Added woodland colors, organic panels, gentle leaves/water animation, and reduced-motion support in [globals.css (line 58)].
 Added grounded nature wording across Home, Discover, Check-In, Memory, badges, streaks, and next-step cards.
 Original, Neon Quest, parent screens, routes, and data behavior remain intact.
+
+8-10-26
+Implemented the Farm child theme.
+Highlights:
+Added persisted farm theme and isFarm context state as a fourth option in the child theme picker.
+Added responsive vintage watercolor farm artwork:
+[public/farm/farm-desktop.webp]
+[public/farm/farm-mobile.webp]
+
+The farm scenery includes pigs, sheep, cows, a horse, chickens, a farmer, barn, farmhouse, fences, fields, and other ordinary farm details without fantasy elements.
+Added barn-red, wheat-gold, pasture-green styling with warm paper-like panels and reduced-motion-safe dust and sunlight ambience.
+Added old-fashioned farmer wording across Home, Discover, Check-In, Memory, badges, streaks, and next-step cards.
+Original, Neon Quest, Woodland, parent screens, routes, and data behavior remain intact.
+
+Verified:
+Focused ESLint passed.
+npm run build passed.
+Git whitespace checks passed.
