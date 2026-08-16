@@ -565,3 +565,154 @@ button, input, textarea, select { font: inherit; }
     animation: none !important;
   }
 }
+
+/* ================================================================== */
+/* Reward system: adventure map, levels, badges, challenges            */
+/* ================================================================== */
+
+/* --- Adventure map ------------------------------------------------ */
+
+.adventure-trail-progress {
+  transition: stroke-dashoffset 900ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.adventure-traveller {
+  transition: transform 900ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.adventure-traveller text {
+  animation: traveller-bob 2.6s ease-in-out infinite;
+}
+
+@keyframes traveller-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+.adventure-sparkle {
+  animation: sparkle-fade 1.5s ease-in-out infinite;
+}
+
+@keyframes sparkle-fade {
+  0%, 100% { opacity: 0; transform: scale(0.6); }
+  50% { opacity: 0.95; transform: scale(1.15); }
+}
+
+.adventure-aurora {
+  background: linear-gradient(
+    100deg,
+    transparent 0%,
+    color-mix(in srgb, var(--secondary) 35%, transparent) 22%,
+    color-mix(in srgb, var(--accent) 30%, transparent) 48%,
+    color-mix(in srgb, var(--sun) 32%, transparent) 72%,
+    transparent 100%
+  );
+  filter: blur(18px);
+  opacity: 0.55;
+  animation: aurora-drift 9s ease-in-out infinite alternate;
+}
+
+@keyframes aurora-drift {
+  0% { transform: translateX(-6%) scaleY(1); }
+  100% { transform: translateX(6%) scaleY(1.25); }
+}
+
+/* --- Level card --------------------------------------------------- */
+
+.level-bar-fill {
+  transition: width 800ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.level-avatar {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+/* --- Badges ------------------------------------------------------- */
+
+.badge-tile:focus-visible,
+.challenge-card:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.badge-tile-celebrating {
+  animation: badge-pop 1.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes badge-pop {
+  0% { transform: scale(1) rotate(0deg); }
+  30% { transform: scale(1.22) rotate(-6deg); }
+  55% { transform: scale(1.08) rotate(5deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+/* --- Achievement celebration -------------------------------------- */
+
+.achievement-card {
+  animation: achievement-drop 520ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes achievement-drop {
+  0% { opacity: 0; transform: translateY(-28px) scale(0.94); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.achievement-icon {
+  animation: achievement-icon-pop 900ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes achievement-icon-pop {
+  0% { transform: scale(0.3) rotate(-18deg); }
+  60% { transform: scale(1.25) rotate(8deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+/* --- Challenge cards ---------------------------------------------- */
+
+.challenge-card {
+  animation: challenge-rise 460ms ease-out backwards;
+  transition: transform 200ms ease, box-shadow 200ms ease;
+}
+
+.challenge-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.09);
+}
+
+@keyframes challenge-rise {
+  0% { opacity: 0; transform: translateY(14px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* --- Theme-specific tuning ---------------------------------------- */
+
+[data-role="child"][data-child-theme="neon-quest"] .adventure-map,
+[data-role="child"][data-child-theme="neon-quest"] .badge-tile {
+  border-radius: 12px;
+}
+
+[data-role="child"][data-child-theme="neon-quest"] .level-avatar {
+  box-shadow: 0 0 18px color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+[data-role="child"][data-child-theme="woodland"] .adventure-map {
+  border-radius: 2.1rem 1.6rem 2.25rem 1.75rem;
+}
+
+/* --- Reduced motion ----------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .adventure-trail-progress,
+  .adventure-traveller,
+  .adventure-traveller text,
+  .adventure-sparkle,
+  .adventure-aurora,
+  .level-bar-fill,
+  .badge-tile-celebrating,
+  .achievement-card,
+  .achievement-icon,
+  .challenge-card {
+    animation: none !important;
+    transition: none !important;
+  }
+}

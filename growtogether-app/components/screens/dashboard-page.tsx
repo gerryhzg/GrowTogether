@@ -7,7 +7,13 @@ import { Panel } from "@/components/ui/panel";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { NextStepCard } from "@/components/ui/next-step-card";
 import { StreakCard } from "@/components/ui/streak-card";
-import { BadgesSection } from "@/components/ui/badges-section";
+import { AdventureMap } from "@/components/ui/adventure-map";
+import { LevelCard } from "@/components/ui/level-card";
+import { ChallengeCards } from "@/components/ui/challenge-cards";
+import { RewardBadgeGrid } from "@/components/ui/reward-badge-grid";
+import { AchievementWatcher } from "@/components/ui/achievement-toast";
+import { calculateRewardProfile, getDailyChallenges, UNLOCKABLES } from "@/lib/rewards";
+import { useCosmetics } from "@/lib/cosmetics";
 import { useAuth } from "@/components/providers/auth-context";
 import { useChildTheme } from "@/components/providers/child-theme-context";
 import { useCheckIns, useInterests, useJourney, useParentSupport } from "@/lib/supabase-hooks";
@@ -15,10 +21,9 @@ import {
   calculateStreakInfo,
   formatDate,
   formatRelativeProgress,
-  getAllBadges,
   getProgressPercentage,
 } from "@/lib/utils";
-import { AppState, DailyCheckIn, GrowthJourney, InterestName, ParentSupportEntry } from "@/lib/types";
+import { DailyCheckIn, GrowthJourney, InterestName, ParentSupportEntry } from "@/lib/types";
 
 function toInterestName(value: string): InterestName {
   const allowed: InterestName[] = ["Music", "Sports", "Science", "Coding", "Art", "Animals"];
@@ -34,6 +39,7 @@ export function DashboardPage() {
   const { parentSupport } = useParentSupport(user?.familyId, journey?.id);
   const [nextStepLoading, setNextStepLoading] = useState(false);
   const [nextStep, setNextStep] = useState<string | null>(null);
+  const { avatarId, decorationId } = useCosmetics();
 
   if (!journey) {
     return (
@@ -108,15 +114,6 @@ export function DashboardPage() {
     encouragementText: entry.encouragement_text,
     activitySuggestion: entry.activity_suggestion,
   }));
-  const dashboardState: AppState = {
-    activeJourneyId: activeJourney.id,
-    interestRatings: interests.map((entry) => ({ interest: toInterestName(entry.interest), rating: entry.rating })),
-    journeys: [activeJourney],
-    checkIns: mappedCheckIns,
-    parentSupportEntries: mappedParentSupport,
-    historyEntries: [],
-  };
-
   async function loadNextStep() {
     if (nextStep || nextStepLoading) return;
     setNextStepLoading(true);
@@ -134,12 +131,30 @@ export function DashboardPage() {
     }
   }
 
-  const badges = getAllBadges(dashboardState, activeJourney);
   const streakInfo = calculateStreakInfo(activeJourney, mappedCheckIns);
   const isParent = user?.role === "parent";
 
+  // Reward layer. Derived from the data already loaded above, so this adds
+  // no extra Supabase queries.
+  const rewardProfile = calculateRewardProfile(activeJourney, mappedCheckIns, mappedParentSupport);
+  const challenges = getDailyChallenges(activeJourney.linkedInterest);
+  const avatarIcon = UNLOCKABLES.find((entry) => entry.id === avatarId)?.icon ?? "🦊";
+
   return (
     <div className="grid gap-5 lg:grid-cols-[1.55fr_1fr]">
+      <AchievementWatcher badges={rewardProfile.badges} />
+
+      <div className="lg:col-span-2">
+        <AdventureMap
+          currentCount={activeJourney.currentCount}
+          targetCount={activeJourney.targetCount}
+          unit={activeJourney.unit}
+          goalTitle={activeJourney.goalTitle}
+          avatarIcon={avatarIcon}
+          decorationId={decorationId}
+        />
+      </div>
+
       <Panel className="relative overflow-hidden">
         <div className="absolute -right-12 top-0 h-28 w-28 rounded-full bg-accent/15 blur-2xl" />
         <div className="relative">
@@ -252,7 +267,21 @@ export function DashboardPage() {
 
       <StreakCard streakInfo={streakInfo} />
 
-      <BadgesSection badges={badges} />
+      <LevelCard
+        profile={rewardProfile}
+        avatarIcon={avatarIcon}
+        audience={isParent ? "parent" : "child"}
+      />
+
+      {!isParent ? (
+        <div className="lg:col-span-2">
+          <ChallengeCards challenges={challenges} />
+        </div>
+      ) : null}
+
+      <div className="lg:col-span-2">
+        <RewardBadgeGrid badges={rewardProfile.badges} />
+      </div>
     </div>
   );
 }
