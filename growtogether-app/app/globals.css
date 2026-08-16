@@ -74,6 +74,25 @@
   --mobile-nav-background: rgba(250, 250, 236, 0.96);
 }
 
+/* Child theme - old-fashioned family farm */
+[data-role="child"][data-child-theme="farm"] {
+  --background: #f2e5c4;
+  --foreground: #3f3022;
+  --surface: rgba(255, 249, 229, 0.91);
+  --surface-strong: #fff8df;
+  --muted: #6c5b48;
+  --border: rgba(104, 72, 40, 0.24);
+  --accent: #b74f3c;
+  --accent-strong: #8b382c;
+  --accent-soft: #f2d2b5;
+  --secondary: #56733f;
+  --secondary-soft: #dce7c7;
+  --sun: #d79b35;
+  --shadow: 0 20px 55px rgba(92, 59, 29, 0.18);
+  --app-background: #f2e5c4;
+  --mobile-nav-background: rgba(255, 247, 221, 0.96);
+}
+
 /* Parent theme - clean and mature */
 [data-role="parent"] {
   --background: #f0f4f8;
@@ -391,11 +410,141 @@ button, input, textarea, select { font: inherit; }
   50% { transform: translateX(7px) scaleX(1.03); opacity: 0.36; }
 }
 
+[data-role="child"][data-child-theme="farm"].app-shell {
+  position: relative;
+  isolation: isolate;
+  background-color: var(--background);
+  background-image:
+    linear-gradient(rgba(255, 246, 214, 0.16), rgba(238, 221, 175, 0.26)),
+    url("/farm/farm-desktop.webp");
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-attachment: fixed;
+}
+
+[data-role="child"][data-child-theme="farm"] .glass-panel {
+  border: 1px solid rgba(112, 75, 39, 0.25);
+  border-radius: 1.35rem;
+  box-shadow:
+    0 0 0 3px rgba(255, 249, 226, 0.42),
+    0 17px 42px rgba(83, 52, 25, 0.16);
+}
+
+[data-role="child"][data-child-theme="farm"] .warm-ring {
+  box-shadow:
+    0 0 0 3px rgba(255, 249, 226, 0.55),
+    0 22px 55px rgba(83, 52, 25, 0.2);
+}
+
+[data-role="child"][data-child-theme="farm"] h1,
+[data-role="child"][data-child-theme="farm"] h2,
+[data-role="child"][data-child-theme="farm"] h3 {
+  color: #523724;
+}
+
+[data-role="child"][data-child-theme="farm"] input,
+[data-role="child"][data-child-theme="farm"] textarea,
+[data-role="child"][data-child-theme="farm"] select {
+  background-color: rgba(255, 251, 232, 0.95);
+  border-color: rgba(112, 75, 39, 0.3);
+  color: var(--foreground);
+}
+
+[data-role="child"][data-child-theme="farm"] input[type="range"] {
+  accent-color: var(--accent);
+}
+
+[data-role="child"][data-child-theme="farm"] .theme-toggle {
+  min-width: 8.75rem;
+  cursor: pointer;
+  background-color: rgba(255, 248, 222, 0.94);
+}
+
+[data-role="child"][data-child-theme="farm"] .family-code-card {
+  border: 1px solid rgba(86, 115, 63, 0.24);
+  background: rgba(239, 238, 198, 0.94);
+}
+
+[data-role="child"][data-child-theme="farm"] .bg-white\/60,
+[data-role="child"][data-child-theme="farm"] .bg-white\/70,
+[data-role="child"][data-child-theme="farm"] .bg-white\/75,
+[data-role="child"][data-child-theme="farm"] .bg-white\/80,
+[data-role="child"][data-child-theme="farm"] .bg-white {
+  background-color: rgba(255, 250, 230, 0.91);
+}
+
+[data-role="child"][data-child-theme="farm"] .bg-gray-100 {
+  background-color: rgba(121, 92, 57, 0.15);
+}
+
+[data-role="child"][data-child-theme="farm"] .mobile-nav {
+  border-color: rgba(112, 75, 39, 0.24);
+  box-shadow: 0 -12px 30px rgba(83, 52, 25, 0.15);
+}
+
+.farm-ambience {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.farm-dust {
+  position: absolute;
+  bottom: -1rem;
+  display: block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 232, 161, 0.7);
+  box-shadow: 0 0 9px rgba(255, 225, 139, 0.65);
+  animation: farm-dust-rise 12s ease-in infinite;
+}
+
+.farm-dust-one { left: 14%; animation-delay: -3s; }
+.farm-dust-two { left: 61%; width: 4px; height: 4px; animation-delay: -8s; animation-duration: 15s; }
+.farm-dust-three { left: 88%; animation-delay: -5s; animation-duration: 17s; }
+
+.farm-sunbeam {
+  position: absolute;
+  top: -18%;
+  right: 8%;
+  width: 20rem;
+  height: 85vh;
+  opacity: 0.18;
+  transform: rotate(16deg);
+  background: linear-gradient(180deg, rgba(255, 247, 193, 0.88), transparent 78%);
+  filter: blur(18px);
+  animation: farm-sunbeam-breathe 7s ease-in-out infinite;
+}
+
+@keyframes farm-dust-rise {
+  0% { transform: translate3d(0, 0, 0); opacity: 0; }
+  18% { opacity: 0.72; }
+  82% { opacity: 0.4; }
+  100% { transform: translate3d(5vw, -105vh, 0); opacity: 0; }
+}
+
+@keyframes farm-sunbeam-breathe {
+  0%, 100% { opacity: 0.13; transform: rotate(16deg) translateX(-6px); }
+  50% { opacity: 0.23; transform: rotate(16deg) translateX(8px); }
+}
+
 @media (max-width: 639px) {
   [data-role="child"][data-child-theme="woodland"].app-shell {
     background-image:
       linear-gradient(rgba(250, 250, 235, 0.12), rgba(229, 239, 211, 0.28)),
       url("/woodland/woodland-mobile.webp");
+    background-attachment: scroll;
+    background-position: center top;
+  }
+
+  [data-role="child"][data-child-theme="farm"].app-shell {
+    background-image:
+      linear-gradient(rgba(255, 248, 220, 0.12), rgba(239, 223, 181, 0.24)),
+      url("/farm/farm-mobile.webp");
     background-attachment: scroll;
     background-position: center top;
   }
@@ -409,6 +558,8 @@ button, input, textarea, select { font: inherit; }
 @media (prefers-reduced-motion: reduce) {
   .woodland-leaf,
   .woodland-water-shimmer,
+  .farm-dust,
+  .farm-sunbeam,
   .float-emoji,
   .confetti-piece {
     animation: none !important;

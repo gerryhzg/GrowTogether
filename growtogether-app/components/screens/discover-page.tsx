@@ -11,7 +11,7 @@ import { GoalSuggestion, GoalSuggestionResponse, InterestName } from "@/lib/type
 
 export function DiscoverPage() {
   const { user } = useAuth();
-  const { isNeonQuest, isWoodland } = useChildTheme();
+  const { isNeonQuest, isWoodland, isFarm } = useChildTheme();
   const { interests, saveInterests } = useInterests(user?.familyId);
   const { journey, createJourney } = useJourney(user?.familyId);
 
@@ -125,6 +125,8 @@ export function DiscoverPage() {
               ? "Stat Builder"
               : isWoodland
                 ? "Find what helps you grow"
+                : isFarm
+                  ? "See what suits you"
                 : "What do you love?"
             : "Screen 2"}
         </p>
@@ -134,6 +136,8 @@ export function DiscoverPage() {
               ? "Build your loadout. Make it loud."
               : isWoodland
                 ? "Explore what makes you curious."
+                : isFarm
+                  ? "Tell this old farmer what perks your ears."
                 : "Rate what makes you excited!"
             : "Discover what the child loves most."}
         </h2>
@@ -176,7 +180,7 @@ export function DiscoverPage() {
 
       <Panel>
         <p className="text-sm uppercase tracking-[0.25em] text-secondary">
-          {isNeonQuest ? "Quest Drops" : isWoodland ? "Paths you could try" : "Suggested goals"}
+          {isNeonQuest ? "Quest Drops" : isWoodland ? "Paths you could try" : isFarm ? "Jobs Around the Farm" : "Suggested goals"}
         </p>
         <h3 className="mt-2 text-2xl font-semibold text-foreground">
           {isChild
@@ -184,6 +188,8 @@ export function DiscoverPage() {
               ? "Pick the mission with main-character energy."
               : isWoodland
                 ? "Choose a goal that feels right."
+                : isFarm
+                  ? "Choose a chore worth doing, little lamb."
                 : "Your perfect goals!"
             : "Goals grounded in real interests"}
         </h3>
@@ -216,7 +222,7 @@ export function DiscoverPage() {
                 {active && <div className="mt-3"><GoalExplanationCard explanation={explanations[index] ?? null} loading={loadingExplanations[index] ?? false} /></div>}
               </div>
             );
-          }) : <div className="rounded-[1.5rem] border border-dashed border-border px-4 py-8 text-sm text-muted">{isChild ? isNeonQuest ? "Set your stats, then let the quest engine cook." : "Rate your interests above and click Find my goals!" : "Rate interests above to see suggestions."}</div>}
+          }) : <div className="rounded-[1.5rem] border border-dashed border-border px-4 py-8 text-sm text-muted">{isChild ? isNeonQuest ? "Set your stats, then let the quest engine cook." : isFarm ? "Mark your interests above, then we'll find a fine chore for you." : "Rate your interests above and click Find my goals!" : "Rate interests above to see suggestions."}</div>}
         </div>
         {goalSuggestions.length > 0 && (
           <div className="mt-8 space-y-4 rounded-[1.5rem] bg-white/75 p-5 shadow-sm">

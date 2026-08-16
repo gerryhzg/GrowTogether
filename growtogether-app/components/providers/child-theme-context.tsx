@@ -2,18 +2,20 @@
 
 import { createContext, ReactNode, useContext } from "react";
 
-export type ChildTheme = "original" | "neon-quest" | "woodland";
+export type ChildTheme = "original" | "neon-quest" | "woodland" | "farm";
 
 type ChildThemeContextValue = {
   childTheme: ChildTheme;
   isNeonQuest: boolean;
   isWoodland: boolean;
+  isFarm: boolean;
 };
 
 const ChildThemeContext = createContext<ChildThemeContextValue>({
   childTheme: "original",
   isNeonQuest: false,
   isWoodland: false,
+  isFarm: false,
 });
 
 export function ChildThemeProvider({
@@ -29,6 +31,7 @@ export function ChildThemeProvider({
         childTheme,
         isNeonQuest: childTheme === "neon-quest",
         isWoodland: childTheme === "woodland",
+        isFarm: childTheme === "farm",
       }}
     >
       {children}

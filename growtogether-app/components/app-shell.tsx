@@ -16,6 +16,7 @@ type NavItem = {
   label: string;
   neonLabel?: string;
   woodlandLabel?: string;
+  farmLabel?: string;
 };
 
 const CHILD_THEME_STORAGE_KEY = "growtogether-child-theme";
@@ -24,11 +25,11 @@ const CHILD_THEME_STORAGE_KEY = "growtogether-child-theme";
 const CHILD_THEME_EVENT = "growtogether:child-theme";
 
 const childNavItems: NavItem[] = [
-  { href: "/", icon: "Home", label: "Home", neonLabel: "Base", woodlandLabel: "Home Trail" },
-  { href: "/discover", icon: "Search", label: "Discover", neonLabel: "Quest Lab", woodlandLabel: "Explore" },
-  { href: "/check-in", icon: "Check", label: "Check-In", neonLabel: "Mission Log", woodlandLabel: "Check-In" },
-  { href: "/quest", icon: "Star", label: "Rewards", neonLabel: "Loadout", woodlandLabel: "Collection" },
-  { href: "/memory", icon: "Book", label: "Memory", neonLabel: "Replay", woodlandLabel: "Growth Journal" },
+  { href: "/", icon: "Home", label: "Home", neonLabel: "Base", woodlandLabel: "Home Trail", farmLabel: "Farmyard" },
+  { href: "/discover", icon: "Search", label: "Discover", neonLabel: "Quest Lab", woodlandLabel: "Explore", farmLabel: "Pick a Goal" },
+  { href: "/check-in", icon: "Check", label: "Check-In", neonLabel: "Mission Log", woodlandLabel: "Check-In", farmLabel: "Chore Check" },
+  { href: "/quest", icon: "Star", label: "Rewards", neonLabel: "Loadout", woodlandLabel: "Collection", farmLabel: "Rewards" },
+  { href: "/memory", icon: "Book", label: "Memory", neonLabel: "Replay", woodlandLabel: "Growth Journal", farmLabel: "Farm Journal" },
 ];
 
 const parentNavItems: NavItem[] = [
@@ -39,7 +40,7 @@ const parentNavItems: NavItem[] = [
 ];
 
 function isChildTheme(value: string | null): value is ChildTheme {
-  return value === "original" || value === "neon-quest" || value === "woodland";
+  return value === "original" || value === "neon-quest" || value === "woodland" || value === "farm";
 }
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -97,6 +98,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   const navItems = isChild ? childNavItems : parentNavItems;
   const isWoodland = childTheme === "woodland";
+  const isFarm = childTheme === "farm";
 
   if (isChild && pathname === "/parent") {
     return (
@@ -108,10 +110,18 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="text-center">
           <div className="text-6xl" aria-hidden="true">Lock</div>
           <h2 className="mt-4 text-2xl font-bold text-foreground">
-            {isWoodland ? "Parent space is just beyond this trail" : "Parent zone is locked, bestie"}
+            {isWoodland
+              ? "Parent space is just beyond this trail"
+              : isFarm
+                ? "Whoa there, little colt. That gate is for parents."
+                : "Parent zone is locked, bestie"}
           </h2>
           <p className="mt-2 text-muted">
-            {isWoodland ? "Head back to your home trail to keep growing." : "Back to base. Your quests are waiting."}
+            {isWoodland
+              ? "Head back to your home trail to keep growing."
+              : isFarm
+                ? "Trot on back to the farmyard. Your work is waiting."
+                : "Back to base. Your quests are waiting."}
           </p>
           <Link
             href="/"
@@ -163,6 +173,14 @@ export function AppShell({ children }: { children: ReactNode }) {
           <span className="woodland-water-shimmer" />
         </div>
       )}
+      {isChild && isFarm && (
+        <div className="farm-ambience" aria-hidden="true">
+          <span className="farm-dust farm-dust-one" />
+          <span className="farm-dust farm-dust-two" />
+          <span className="farm-dust farm-dust-three" />
+          <span className="farm-sunbeam" />
+        </div>
+      )}
       <div className="app-content mx-auto flex w-full max-w-7xl flex-col gap-6">
         <header className="glass-panel warm-ring relative overflow-hidden rounded-[2rem] px-6 py-5 sm:px-8">
           <div className="relative flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -172,6 +190,8 @@ export function AppShell({ children }: { children: ReactNode }) {
                   ? "GrowTogether HQ"
                   : isChild && isWoodland
                     ? "GrowTogether Woodland"
+                    : isChild && isFarm
+                      ? "GrowTogether Farm"
                     : "GrowTogether"}
               </p>
               <h1 className="mt-2 font-display text-3xl leading-tight text-foreground sm:text-4xl">
@@ -180,6 +200,8 @@ export function AppShell({ children }: { children: ReactNode }) {
                     ? `${user.name}, lock in. The mission board is live.`
                     : isWoodland
                       ? `Welcome to the woods, ${user.name}.`
+                      : isFarm
+                        ? `Morning, ${user.name}, my fine little lamb.`
                     : `Hey ${user.name}! Ready to grow?`
                   : `Welcome back, ${user.name} ${user.emoji}`}
               </h1>
@@ -189,6 +211,8 @@ export function AppShell({ children }: { children: ReactNode }) {
                     ? "Stack XP, catch Ws, and keep the streak spicy. No cap."
                     : isWoodland
                       ? "Small steps grow into something wonderful."
+                      : isFarm
+                        ? "Let’s tend today’s goal and make the old barn proud."
                     : "You are doing amazing. Keep going."
                   : "Supporting your child's growth journey."}
               </p>
@@ -214,6 +238,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                     <option value="original">Original</option>
                     <option value="neon-quest">Neon Quest</option>
                     <option value="woodland">Woodland</option>
+                    <option value="farm">Farm</option>
                   </select>
                 </label>
               )}
@@ -241,6 +266,8 @@ export function AppShell({ children }: { children: ReactNode }) {
                 ? item.neonLabel
                 : isChild && isWoodland && item.woodlandLabel
                   ? item.woodlandLabel
+                  : isChild && isFarm && item.farmLabel
+                    ? item.farmLabel
                 : item.label;
 
             return (
@@ -271,6 +298,8 @@ export function AppShell({ children }: { children: ReactNode }) {
                 ? item.neonLabel
                 : isChild && isWoodland && item.woodlandLabel
                   ? item.woodlandLabel
+                  : isChild && isFarm && item.farmLabel
+                    ? item.farmLabel
                 : item.label;
 
             return (
