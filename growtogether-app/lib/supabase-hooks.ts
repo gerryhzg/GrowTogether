@@ -207,3 +207,81 @@ export function useParentSupport(familyId: string | undefined, journeyId: string
 
   return { parentSupport, saveParentSupport };
 }
+
+type ChatMessageRow = {
+  id: string;
+  family_id: string;
+  sender_id: string;
+  sender_role: "child" | "parent";
+  content: string;
+  created_at?: string;
+};
+
+export function useChat(familyId: string | undefined) {
+  const [messages, setMessages] = useState<ChatMessageRow[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!familyId) {
+      setMessages([]);
+      setLoading(false);
+      return;
+    }
+
+    async function loadMessages() {
+      const { data } = await supabase
+        .from("chat_messages")
+        .select("*")
+        .eq("family_id", familyId)
+        .order("created_at", { ascending: true });
+
+      setMessages(data ?? []);
+      setLoading(false);
+    }
+
+    void loadMessages();
+
+    const channel = supabase
+      .channel(`chat-${familyId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "chat_messages",
+          filter: `family_id=eq.${familyId}`,
+        },
+        (payload) => {
+          const nextMessage = payload.new as ChatMessageRow;
+          setMessages((prev) => {
+            const exists = prev.some((message) => message.id === nextMessage.id);
+            return exists ? prev : [...prev, nextMessage];
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [familyId]);
+
+  async function sendMessage(
+    content: string,
+    senderId: string,
+    senderRole: "child" | "parent"
+  ) {
+    if (!familyId || !content.trim()) return { error: "Empty message." };
+
+    const { error } = await supabase.from("chat_messages").insert({
+      family_id: familyId,
+      sender_id: senderId,
+      sender_role: senderRole,
+      content: content.trim(),
+    });
+
+    return { error: error ? error.message : null };
+  }
+
+  return { messages, loading, sendMessage };
+}
