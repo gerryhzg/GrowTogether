@@ -13,6 +13,9 @@ import {
   ParentSupportResponse,
   SafetyCheckResponse,
 } from "@/lib/types";
+import { useChat } from "@/lib/supabase-hooks";
+
+
 
 type JsonResult<T> = { data: T | null; error: string | null };
 
@@ -33,6 +36,18 @@ export function ParentCenterPage() {
   const { journey } = useJourney(user?.familyId);
   const { checkIns } = useCheckIns(user?.familyId, journey?.id);
   const { parentSupport, saveParentSupport } = useParentSupport(user?.familyId, journey?.id);
+  const { messages, loading, sendMessage } = useChat(user?.familyId);
+  const [draft, setDraft] = useState("");
+
+  async function handleSendMessage() {
+    if (!user || !draft.trim()) return;
+
+    const result = await sendMessage(draft, user.id, user.role);
+
+    if (!result.error) {
+      setDraft("");
+    }
+  }
   const [summary, setSummary] = useState("");
   const [encouragement, setEncouragement] = useState("");
   const [activity, setActivity] = useState("");
@@ -233,3 +248,5 @@ export function ParentCenterPage() {
     </div>
   );
 }
+
+
